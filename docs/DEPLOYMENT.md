@@ -94,19 +94,30 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
 
 ### 2. Initial Server Setup
 
+**One-time server configuration** (run once when setting up the server):
+
 ```bash
-# SSH into your Cloudways server with deployment user
+# SSH into your Cloudways server
 ssh {app_id}@your-server-ip
 
-# Navigate to API directory (Cloudways webroot)
-cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+# Verify server environment
+node --version    # Should be 18.x or higher
+npm --version     # Should be 9.x or higher
+which git         # Verify git is installed
 
-# Clone repository
-git clone https://github.com/Paktas/vendorica-api.git .
+# Check your application directories
+pwd              # Should show: /home/{account_id}.cloudwaysapps.com/{app_id}
+ls -la           # View directory structure
 
-# Install dependencies
-npm ci --only=production
+# Navigate to webroot (where your app will be deployed)
+cd public_html
+pwd              # Confirm: /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+
+# Verify webroot is ready for deployment
+ls -la           # Should be empty or contain default files
 ```
+
+**Note**: Repository cloning and dependency installation will be handled during the first deployment.
 
 ### 3. Environment Configuration
 
@@ -203,21 +214,32 @@ module.exports = {
 }
 ```
 
-### 5. Initial Build and Start
+### 5. First Deployment
 
-```bash
-# Build the application
-npm run build
+**After completing the above setup, perform your first deployment:**
 
-# Start with PM2
-pm2 start ecosystem.config.js
+1. **Use GitHub Actions** (recommended):
+   - Push code to `main` branch
+   - GitHub Actions will automatically deploy
 
-# Save PM2 configuration
-pm2 save
-
-# Setup PM2 to start on boot
-pm2 startup
-```
+2. **Or manual deployment**:
+   ```bash
+   # SSH to server
+   ssh {app_id}@your-server-ip
+   cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+   
+   # Clone repository (first time only)
+   git clone https://github.com/Paktas/vendorica-api.git .
+   
+   # Install dependencies and build
+   npm ci --only=production
+   npm run build
+   
+   # Start with PM2
+   pm2 start ecosystem.config.js
+   pm2 save
+   pm2 startup
+   ```
 
 ### 6. Apache Configuration (Automatic)
 
