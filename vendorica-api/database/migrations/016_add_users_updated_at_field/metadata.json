@@ -1,0 +1,17 @@
+{
+  "version": "016",
+  "name": "add_users_updated_at_field",
+  "description": "Add missing updated_at timestamp field and trigger to users table",
+  "author": "Development Team",
+  "date": "2025-07-27",
+  "dependencies": ["001_create_initial_tables"],
+  "tables_affected": ["users"],
+  "breaking_changes": false,
+  "rollback_safe": true,
+  "notes": [
+    "Adds updated_at column if it doesn't exist",
+    "Creates trigger to automatically update the timestamp on row updates",
+    "Updates existing records to have current timestamp",
+    "Safe to run even if column already exists"
+  ]
+}
