@@ -106,6 +106,16 @@ jobs:
             echo "npm: $(npm --version 2>/dev/null || echo 'not found')"
             echo "Git: $(git --version 2>/dev/null || echo 'not found')"
             echo "PM2: $(pm2 --version 2>/dev/null || echo 'not found')"
+            
+            # Debug PM2 location
+            echo -e "\nPM2 location check:"
+            which pm2 || echo "PM2 not in PATH"
+            echo "PATH: $PATH"
+            
+            # Check common PM2 locations
+            [ -f "$HOME/.npm-global/bin/pm2" ] && echo "Found at: $HOME/.npm-global/bin/pm2"
+            [ -f "/usr/local/bin/pm2" ] && echo "Found at: /usr/local/bin/pm2"
+            [ -f "$HOME/node_modules/.bin/pm2" ] && echo "Found at: $HOME/node_modules/.bin/pm2"
 
       - name: 🧹 Clean Deployment Directory
         uses: appleboy/ssh-action@v1.2.2
@@ -216,20 +226,31 @@ jobs:
           script: |
             cd public_html
             
-            # Check if PM2 is available
+            # Find PM2 executable
+            PM2_PATH=""
             if command -v pm2 > /dev/null 2>&1; then
-              echo "PM2 is available"
+              PM2_PATH="pm2"
+            elif [ -f "$HOME/.npm-global/bin/pm2" ]; then
+              PM2_PATH="$HOME/.npm-global/bin/pm2"
+            elif [ -f "/usr/local/bin/pm2" ]; then
+              PM2_PATH="/usr/local/bin/pm2"
+            elif [ -f "$HOME/node_modules/.bin/pm2" ]; then
+              PM2_PATH="$HOME/node_modules/.bin/pm2"
+            fi
+            
+            if [ -n "$PM2_PATH" ]; then
+              echo "PM2 found at: $PM2_PATH"
               
               # Check if process exists
-              if pm2 describe vendorica-api > /dev/null 2>&1; then
+              if $PM2_PATH describe vendorica-api > /dev/null 2>&1; then
                 echo "Reloading existing PM2 process..."
-                pm2 reload vendorica-api --update-env
+                $PM2_PATH reload vendorica-api --update-env
               else
                 echo "Starting new PM2 process..."
-                pm2 start ecosystem.config.js
+                $PM2_PATH start ecosystem.config.js
               fi
               
-              pm2 save
+              $PM2_PATH save
               echo "✅ PM2 process configured"
             else
               echo "⚠️ PM2 not installed - please install PM2 or contact Cloudways support"
@@ -250,9 +271,21 @@ jobs:
             echo "✅ Dependencies: Installed" 
             echo "✅ Build: Completed"
             
+            # Find PM2 for status check
+            PM2_PATH=""
             if command -v pm2 > /dev/null 2>&1; then
+              PM2_PATH="pm2"
+            elif [ -f "$HOME/.npm-global/bin/pm2" ]; then
+              PM2_PATH="$HOME/.npm-global/bin/pm2"
+            elif [ -f "/usr/local/bin/pm2" ]; then
+              PM2_PATH="/usr/local/bin/pm2"
+            elif [ -f "$HOME/node_modules/.bin/pm2" ]; then
+              PM2_PATH="$HOME/node_modules/.bin/pm2"
+            fi
+            
+            if [ -n "$PM2_PATH" ]; then
               echo "✅ PM2: Configured"
-              pm2 status
+              $PM2_PATH status
             else
               echo "⚠️ PM2: Not available"
             fi
