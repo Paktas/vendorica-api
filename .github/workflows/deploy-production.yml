@@ -88,7 +88,7 @@ jobs:
             echo "User: $(whoami)"
             echo "Server: $(hostname)"
 
-      - name: 🚀 Deploy and Test Environment
+      - name: 🔍 Check Server Environment
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -96,121 +96,166 @@ jobs:
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
           script: |
-            echo "=== SERVER ENVIRONMENT CHECK ==="
             echo "Initial directory: $(pwd)"
             echo "Current user: $(whoami)"
-            
-            echo -e "\n=== NAVIGATING TO PUBLIC_HTML ==="
             cd public_html
-            echo "Now in directory: $(pwd)"
+            echo "Working directory: $(pwd)"
             
-            echo -e "\n=== PUBLIC_HTML DIRECTORY CONTENTS ==="
+            echo -e "\n📦 Package versions:"
+            echo "Node.js: $(node --version 2>/dev/null || echo 'not found')"
+            echo "npm: $(npm --version 2>/dev/null || echo 'not found')"
+            echo "Git: $(git --version 2>/dev/null || echo 'not found')"
+            echo "PM2: $(pm2 --version 2>/dev/null || echo 'not found')"
+
+      - name: 🧹 Clean Deployment Directory
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            echo "Current directory contents:"
             ls -la
             
-            echo -e "\n=== AVAILABLE PACKAGES ==="
-            echo "Node.js:"
-            which node && node --version || echo "Node.js not found"
-            
-            echo "npm:"
-            which npm && npm --version || echo "npm not found"
-            
-            echo "Git:"
-            which git && git --version || echo "Git not found"
-            
-            echo "PM2:"
-            which pm2 && pm2 --version || echo "PM2 not found"
-            
-            echo -e "\n=== TESTING GIT CLONE OPERATION ==="
-            
-            # Check if git repository already exists
+            # Clean directory for fresh deployment
             if [ -d ".git" ]; then
-              echo "Git repository already exists, removing for clean test..."
+              echo "Removing existing git repository..."
               rm -rf .git
             fi
             
-            # Remove ALL files and directories for clean test
-            echo "Cleaning directory for git clone test..."
-            echo "Files to be removed:"
-            ls -la
-            
-            # Remove everything except . and ..
+            echo "Cleaning directory..."
             find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
             
-            echo "Directory before clone:"
+            echo "Directory after cleanup:"
             ls -la
-            
-            # Test git clone
-            echo -e "\nCloning repository..."
+
+      - name: 📥 Clone Repository
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            echo "Cloning repository..."
             git clone https://github.com/Paktas/vendorica-api.git .
             
-            # Verify clone was successful
+            # Verify clone
             if [ -d ".git" ]; then
-              echo "✅ Git clone successful"
-              
-              echo -e "\nRepository files:"
-              ls -la
-              
-              echo -e "\nChecking key files:"
-              [ -f "package.json" ] && echo "✅ package.json found" || echo "❌ package.json missing"
-              [ -d "src" ] && echo "✅ src directory found" || echo "❌ src directory missing"
-              [ -f "README.md" ] && echo "✅ README.md found" || echo "❌ README.md missing"
-              
-              echo -e "\nGit status:"
-              git status --porcelain || echo "Git status check failed"
-              
-              echo -e "\n=== TESTING NPM INSTALL ==="
-              
-              # Fix npm cache permissions first
-              echo "Fixing npm cache permissions..."
-              sudo chown -R 1012:33 "/home/1462634.cloudwaysapps.com/jwnbrgtuur/.npm" 2>/dev/null || echo "Cache permission fix not needed"
-              
-              # Test npm install
-              echo "Running npm install..."
-              npm install --omit=dev
-              
-              # Check if node_modules was created
-              if [ -d "node_modules" ]; then
-                echo "✅ npm install successful"
-                echo "node_modules size:"
-                du -sh node_modules 2>/dev/null || echo "Size check failed"
-                
-                echo -e "\nChecking package-lock.json:"
-                [ -f "package-lock.json" ] && echo "✅ package-lock.json created" || echo "⚠️ package-lock.json not found"
-                
-              else
-                echo "❌ npm install failed - node_modules not found"
-              fi
-              
-              echo -e "\n=== NPM INSTALL TEST COMPLETE ==="
-              
-              echo -e "\n=== TESTING NPM BUILD ==="
-              
-              # Test npm run build
-              echo "Running npm run build..."
-              npm run build
-              
-              # Check if dist directory was created
-              if [ -d "dist" ]; then
-                echo "✅ npm run build successful"
-                echo "Build output:"
-                ls -la dist/
-                
-                echo -e "\nChecking key build files:"
-                [ -f "dist/index.js" ] && echo "✅ dist/index.js found" || echo "❌ dist/index.js missing"
-                [ -f "dist/app.js" ] && echo "✅ dist/app.js found" || echo "⚠️ dist/app.js not found (may not exist)"
-                
-                echo -e "\nBuild directory size:"
-                du -sh dist/ 2>/dev/null || echo "Size check failed"
-                
-              else
-                echo "❌ npm run build failed - dist directory not found"
-              fi
-              
-              echo -e "\n=== NPM BUILD TEST COMPLETE ==="
-              
+              echo "✅ Repository cloned successfully"
+              echo "Key files:"
+              [ -f "package.json" ] && echo "✅ package.json" || echo "❌ package.json missing"
+              [ -d "src" ] && echo "✅ src/" || echo "❌ src/ missing"
+              [ -f "tsconfig.json" ] && echo "✅ tsconfig.json" || echo "❌ tsconfig.json missing"
             else
               echo "❌ Git clone failed"
+              exit 1
+            fi
+
+      - name: 📦 Install Dependencies
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            
+            # Fix npm cache permissions
+            echo "Fixing npm cache permissions..."
+            sudo chown -R 1012:33 "/home/1462634.cloudwaysapps.com/jwnbrgtuur/.npm" 2>/dev/null || true
+            
+            echo "Installing production dependencies..."
+            npm install --omit=dev
+            
+            # Verify installation
+            if [ -d "node_modules" ]; then
+              echo "✅ Dependencies installed successfully"
+              echo "node_modules size: $(du -sh node_modules 2>/dev/null | cut -f1)"
+            else
+              echo "❌ npm install failed"
+              exit 1
+            fi
+
+      - name: 🔨 Build Application
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            
+            echo "Building application..."
+            npm run build
+            
+            # Verify build
+            if [ -d "dist" ]; then
+              echo "✅ Build completed successfully"
+              echo "Build size: $(du -sh dist 2>/dev/null | cut -f1)"
+              echo "Key files:"
+              [ -f "dist/index.js" ] && echo "✅ dist/index.js" || echo "❌ dist/index.js missing"
+              [ -f "dist/app.js" ] && echo "✅ dist/app.js" || echo "⚠️ dist/app.js not required"
+            else
+              echo "❌ Build failed - dist directory not found"
+              exit 1
+            fi
+
+      - name: ⚙️ Setup PM2 Process
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            
+            # Check if PM2 is available
+            if command -v pm2 > /dev/null 2>&1; then
+              echo "PM2 is available"
+              
+              # Check if process exists
+              if pm2 describe vendorica-api > /dev/null 2>&1; then
+                echo "Reloading existing PM2 process..."
+                pm2 reload vendorica-api --update-env
+              else
+                echo "Starting new PM2 process..."
+                pm2 start ecosystem.config.js
+              fi
+              
+              pm2 save
+              echo "✅ PM2 process configured"
+            else
+              echo "⚠️ PM2 not installed - please install PM2 or contact Cloudways support"
+              echo "Application built but not running"
+            fi
+
+      - name: 🏁 Deployment Summary
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            echo "=== DEPLOYMENT SUMMARY ==="
+            echo "✅ Repository: Cloned"
+            echo "✅ Dependencies: Installed" 
+            echo "✅ Build: Completed"
+            
+            if command -v pm2 > /dev/null 2>&1; then
+              echo "✅ PM2: Configured"
+              pm2 status
+            else
+              echo "⚠️ PM2: Not available"
             fi
             
-            echo -e "\n=== GIT CLONE TEST COMPLETE ==="
-            echo -e "\n=== ENVIRONMENT CHECK COMPLETE ==="
+            echo -e "\n📁 Deployment path: $(pwd)"
+            echo "🚀 Deployment completed successfully!"
