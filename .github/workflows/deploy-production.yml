@@ -307,10 +307,10 @@ jobs:
               fi
               
               # Verify ecosystem config exists
-              if [ -f "ecosystem.config.js" ]; then
-                echo "✅ ecosystem.config.js found"
+              if [ -f "ecosystem.config.mjs" ]; then
+                echo "✅ ecosystem.config.mjs found"
               else
-                echo "❌ ecosystem.config.js missing"
+                echo "❌ ecosystem.config.mjs missing"
                 exit 1
               fi
               
@@ -320,7 +320,7 @@ jobs:
                 $PM2_PATH reload vendorica-api --update-env
               else
                 echo "Starting new PM2 process..."
-                $PM2_PATH start ecosystem.config.js
+                $PM2_PATH start ecosystem.config.mjs
               fi
               
               $PM2_PATH save

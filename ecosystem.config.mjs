@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   apps: [{
     name: 'vendorica-api',
     script: './dist/index.js',
