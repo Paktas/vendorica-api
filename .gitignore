@@ -3,6 +3,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # Runtime data
 pids
@@ -10,22 +11,45 @@ pids
 *.seed
 *.pid.lock
 
-# Environment variables
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Bower dependency directory (https://bower.io/)
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Environment variables - CRITICAL: Keep production secrets out of git
 .env
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+.env.production
+.env.staging
 
 # Build output
 dist/
 build/
+out/
 
-# IDE
+# IDE and Editors
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -35,22 +59,38 @@ build/
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
 
 # Logs
-logs
+logs/
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
 
-# PM2
+# PM2 logs and runtime
 .pm2/
+logs/
 
 # ESLint cache
 .eslintcache
 
 # TypeScript cache
 *.tsbuildinfo
+.tscache/
 
 # Optional npm cache directory
 .npm
+
+# Optional eslint cache
+.eslintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
 
 # Optional REPL history
 .node_repl_history
@@ -60,3 +100,77 @@ logs
 
 # Yarn Integrity file
 .yarn-integrity
+.yarn/
+.pnp.*
+
+# parcel-bundler cache (https://parceljs.org/)
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Vuepress build output
+.vuepress/dist
+
+# Serverless directories
+.serverless/
+
+# FuseBox cache
+.fusebox/
+
+# DynamoDB Local files
+.dynamodb/
+
+# TernJS port file
+.tern-port
+
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
+
+# Temporary folders
+tmp/
+temp/
+
+# Database files (if using local SQLite)
+*.sqlite
+*.sqlite3
+*.db
+
+# SSL certificates (if stored locally)
+*.pem
+*.key
+*.crt
+*.csr
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Docker
+.dockerignore
+Dockerfile.local
+
+# MacOS
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
