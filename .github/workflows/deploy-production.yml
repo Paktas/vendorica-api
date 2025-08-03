@@ -306,21 +306,33 @@ jobs:
                 exit 1
               fi
               
-              # Verify ecosystem config exists
+              # Verify ecosystem config exists and test it
               if [ -f "ecosystem.config.mjs" ]; then
                 echo "✅ ecosystem.config.mjs found"
+                echo "Config file contents:"
+                head -5 ecosystem.config.mjs
+                
+                # Test if PM2 can read the config
+                echo "Testing PM2 config validation..."
+                $PM2_PATH prettylist 2>/dev/null || true
+                
+                # Try starting with explicit syntax
+                echo "Attempting to start PM2 process..."
+                $PM2_PATH start ecosystem.config.mjs --env production 2>&1 || {
+                  echo "❌ PM2 start with .mjs failed, trying alternative approach..."
+                  
+                  # Alternative: start directly with script path
+                  if [ -f "dist/index.js" ]; then
+                    echo "Starting PM2 directly with script path..."
+                    $PM2_PATH start dist/index.js --name vendorica-api --instances 2 --env production 2>&1
+                  else
+                    echo "❌ dist/index.js not found"
+                    exit 1
+                  fi
+                }
               else
                 echo "❌ ecosystem.config.mjs missing"
                 exit 1
-              fi
-              
-              # Check if process exists
-              if $PM2_PATH describe vendorica-api > /dev/null 2>&1; then
-                echo "Reloading existing PM2 process..."
-                $PM2_PATH reload vendorica-api --update-env
-              else
-                echo "Starting new PM2 process..."
-                $PM2_PATH start ecosystem.config.mjs
               fi
               
               $PM2_PATH save
