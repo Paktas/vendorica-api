@@ -237,60 +237,62 @@ This design balances modern development experience with production reliability w
 
 ## PM2 Setup (Industry Best Practice)
 
-### System-Level Installation (Recommended for Production)
+### Cloudways Master User Installation (Optimal for Cloudways)
 
-For production environments with multiple applications, PM2 should be installed at the system level:
+Cloudways installs PM2 on the master user account, which is optimal for their multi-tenant environment:
 
 ```bash
-# System-level installation (requires admin access)
-sudo npm install -g pm2
+# Cloudways master user setup (done by Cloudways support)
+# PM2 installed at: /home/master/bin/npm/lib/node_modules/bin/pm2
+# Configured via: /home/master/.bash_aliases
 
-# Verify system installation
-sudo which pm2  # Should show /usr/local/bin/pm2 or similar
-sudo pm2 --version
+# Master user can manage PM2 for all applications
+sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 status'
 ```
 
 ### Deployment Workflow
 
-The deployment workflow automatically:
-- Prefers system-level PM2 (`sudo pm2`) for production stability
-- Falls back to user PM2 if system PM2 not available
-- Uses direct Node.js execution as final fallback
-- Provides comprehensive diagnostics for troubleshooting
+The deployment workflow automatically detects and uses the optimal PM2 installation:
 
-### Why System-Level PM2?
+1. **Cloudways master user PM2** (optimal for Cloudways hosting)
+2. **System-level PM2** (`sudo pm2`) (good for other hosting)
+3. **User PM2** (`pm2`) (fallback option)
+4. **Direct Node.js execution** (final fallback)
 
-**Advantages for Production:**
-- **Multi-tenant safe**: Each application user manages their own processes
-- **Consistent permissions**: All users access PM2 the same way
-- **Server stability**: System installation is more persistent
-- **Admin control**: Centralized PM2 management
-- **Resource isolation**: Better process separation between applications
+### Why Cloudways Master User PM2?
+
+**Advantages for Cloudways Hosting:**
+- **Centralized management**: Master user controls all PM2 processes
+- **Multi-tenant isolation**: Each app user's processes are isolated
+- **Cloudways integration**: Works with Cloudways monitoring and management
+- **Consistent access**: All applications use the same PM2 instance
+- **Support friendly**: Cloudways support can manage PM2 centrally
 
 ### Manual Verification
 
-To verify PM2 is working correctly on your server:
+To verify PM2 is working correctly on your Cloudways server:
 
 ```bash
-# SSH into your server
-ssh user@your-server.com
+# SSH into your server as application user
+ssh appuser@your-server.com
 
-# Test PM2 (should work without any setup)
-pm2 --version
+# Check master user PM2 (Cloudways approach)
+sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 --version'
 
 # Check if your app is running
-pm2 status
+sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 status'
 
 # View application logs
-pm2 logs vendorica-api
+sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 logs vendorica-api'
 ```
 
-### Benefits of Global Installation
+### Benefits of Master User Installation
 
-- **Consistent access**: PM2 available in all shell sessions
-- **CI/CD friendly**: No special configuration needed for automated deployments
-- **Standard PATH**: Located at `/usr/local/bin/pm2` or npm global directory
-- **No aliases required**: Direct access via `pm2` command
+- **Centralized control**: All PM2 processes managed by master user
+- **Multi-tenant security**: Application users can't interfere with each other's processes
+- **Cloudways integration**: Works seamlessly with Cloudways management tools
+- **Professional hosting**: Standard approach for managed hosting environments
+- **Automated deployment**: GitHub Actions handles the complexity automatically
 
 ## Recent Architectural Improvements
 

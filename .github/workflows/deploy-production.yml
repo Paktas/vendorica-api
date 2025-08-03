@@ -209,10 +209,17 @@ jobs:
             echo -e "\nSearching for existing PM2 installations:"
             find /usr /home -name "pm2" -type f 2>/dev/null | head -10 || echo "No PM2 found with find command"
             
-            # Check if there's a system-wide PM2
+            # Check if there's a system-wide or master user PM2
             if sudo which pm2 2>/dev/null; then
-              echo "✅ System PM2 found: $(sudo which pm2)"
-              echo "System PM2 version: $(sudo pm2 --version 2>/dev/null || echo 'version check failed')"
+              echo "✅ System/Master PM2 found: $(sudo which pm2)"
+              echo "System/Master PM2 version: $(sudo pm2 --version 2>/dev/null || echo 'version check failed')"
+            fi
+            
+            # Check for Cloudways master user PM2 setup
+            if sudo test -f /home/master/.bash_aliases; then
+              echo "✅ Found Cloudways master user setup"
+              echo "Master .bash_aliases content:"
+              sudo head -5 /home/master/.bash_aliases 2>/dev/null || echo "Cannot read master aliases"
             fi
             
             # Check current user PM2 (but prefer system PM2)
@@ -275,16 +282,21 @@ jobs:
             # PM2 process management with fallback options
             echo "Starting PM2 process management..."
             
-            # Determine which PM2 to use (prefer system-level)
+            # Determine which PM2 to use (prefer Cloudways master user PM2)
             PM2_CMD=""
-            if sudo which pm2 > /dev/null 2>&1; then
+            if sudo test -f /home/master/.bash_aliases && sudo grep -q "pm2" /home/master/.bash_aliases; then
+              # Use Cloudways master user PM2 (optimal for Cloudways)
+              PM2_CMD="sudo -u master bash -c 'source /home/master/.bash_aliases && pm2'"
+              echo "✅ Using Cloudways master user PM2"
+              echo "This is optimal for Cloudways multi-tenant environment"
+            elif sudo which pm2 > /dev/null 2>&1; then
               PM2_CMD="sudo pm2"
               echo "✅ Using system PM2: $(sudo which pm2)"
-              echo "This is optimal for production multi-tenant environment"
+              echo "This is good for production multi-tenant environment"
             elif command -v pm2 > /dev/null 2>&1; then
               PM2_CMD="pm2"
               echo "⚠️ Using user PM2: $(which pm2)"
-              echo "Note: System-level PM2 would be better for production"
+              echo "Note: Master user PM2 would be better for Cloudways"
             else
               echo "❌ No PM2 available - will run application directly"
               # Start app directly without PM2
@@ -375,9 +387,14 @@ jobs:
             # Check PM2 logs for port information
             echo -e "\nPM2 Application Logs (last 10 lines):"
             
-            # Check PM2 status (prefer system PM2)
-            if sudo which pm2 > /dev/null 2>&1; then
-              echo "✅ PM2: Available (system - optimal for production)"
+            # Check PM2 status (prefer Cloudways master user PM2)
+            if sudo test -f /home/master/.bash_aliases && sudo grep -q "pm2" /home/master/.bash_aliases; then
+              echo "✅ PM2: Available (Cloudways master user - optimal for Cloudways)"
+              sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 status'
+              echo -e "\nRecent application logs:"
+              sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 logs vendorica-api --lines 5 --nostream' 2>/dev/null || echo "No PM2 logs available"
+            elif sudo which pm2 > /dev/null 2>&1; then
+              echo "✅ PM2: Available (system)"
               sudo pm2 status
               echo -e "\nRecent application logs:"
               sudo pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
