@@ -71,8 +71,9 @@ vendorica-api/
 │   └── index.ts            # Application entry point
 ├── dist/                   # Compiled JavaScript (production)
 ├── logs/                   # PM2 log files
-├── .env.development        # Development environment (tracked)
+├── .env.development        # Development environment (IGNORED by git)
 ├── .env.production         # Production environment (IGNORED by git)
+├── .env.example            # Environment template (tracked)
 ├── ecosystem.config.js     # PM2 configuration
 ├── package.json            # Dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
@@ -81,7 +82,16 @@ vendorica-api/
 
 ## Environment Configuration
 
-### Development (.env.development)
+### Environment Files (.env.*)
+
+**Security**: All `.env.*` files are ignored by git except `.env.example`
+
+**Setup Process**:
+1. Copy `.env.example` to `.env.development` and `.env.production`
+2. Fill in actual values for your environment
+3. Never commit actual environment files
+
+**Development (.env.development)**:
 ```env
 NODE_ENV=development
 PORT=3010
@@ -90,9 +100,10 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_anon_key
 API_BASE_URL=http://localhost:3010
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+JWT_SECRET=your-development-jwt-secret
 ```
 
-### Production (.env.production)
+**Production (.env.production)**:
 ```env
 NODE_ENV=production
 # NO PORT - Web server handles routing
@@ -101,6 +112,7 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_production_anon_key
 API_BASE_URL=https://api.vendorica.com
 CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
+JWT_SECRET=your-production-jwt-secret
 ```
 
 ## Development Workflow
@@ -209,7 +221,7 @@ TypeScript path aliases are resolved during build time by Vite, ensuring clean i
 - **JWT Authentication**: Secure token-based authentication (replaced insecure base64)
 - **Token Management**: 7-day expiration with refresh capabilities
 - **Standardized Errors**: Consistent error responses with request tracking
-- **Environment Security**: Production secrets excluded from git (.env.production ignored)
+- **Environment Security**: All environment files ignored by git (only .env.example tracked)
 - **Request Tracking**: Request IDs for debugging and audit trails
 
 ## Platform Agnostic Deployment
@@ -227,7 +239,7 @@ This design balances modern development experience with production reliability w
 
 ### Security Enhancements
 - **JWT Authentication System**: Replaced insecure base64 tokens with proper JWT implementation
-- **Environment Security**: `.env.production` excluded from git to prevent secrets exposure
+- **Environment Security**: All `.env.*` files excluded from git (only `.env.example` tracked)
 - **Standardized Error Handling**: Consistent error responses with request tracking and timestamps
 - **Request ID Middleware**: Unique request identifiers for debugging and audit trails
 

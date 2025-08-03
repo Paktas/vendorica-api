@@ -30,12 +30,10 @@ bower_components
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
-# Environment variables - CRITICAL: Keep production secrets out of git
+# Environment variables - CRITICAL: Keep all secrets out of git
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
+.env.development
 .env.production
 .env.staging
 

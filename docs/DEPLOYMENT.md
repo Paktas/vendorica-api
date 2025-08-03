@@ -20,10 +20,12 @@ npm install
 
 ### 2. Environment Configuration
 
+**Security**: All environment files are ignored by git except `.env.example`
+
 Copy and configure the production environment file:
 
 ```bash
-cp .env.production.example .env.production
+cp .env.example .env.production
 ```
 
 Edit `.env.production` with your production values:

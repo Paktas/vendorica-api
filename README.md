@@ -24,10 +24,11 @@ Enterprise vendor risk management platform API backend.
 # Install dependencies
 npm install
 
-# Copy environment template
-cp .env.example .env
+# Copy environment templates
+cp .env.example .env.development
+cp .env.example .env.production
 
-# Configure your environment variables in .env
+# Configure your environment variables in .env.development and .env.production
 
 # Run database migrations
 npm run migrate:up
@@ -104,6 +105,13 @@ npm run migrate:status
 ```
 
 ## Environment Variables
+
+**Security**: All environment files are ignored by git except `.env.example`
+
+**Setup**:
+1. Copy `.env.example` to `.env.development` and `.env.production`
+2. Fill in actual values for your specific environment
+3. Never commit actual environment files to git
 
 See `.env.example` for all required environment variables.
 
