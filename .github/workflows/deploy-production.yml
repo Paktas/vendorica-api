@@ -120,4 +120,38 @@ jobs:
             echo "PM2:"
             which pm2 && pm2 --version || echo "PM2 not found"
             
+            echo -e "\n=== TESTING FILE OPERATIONS ==="
+            
+            # Test creating a file
+            echo "Creating test file..."
+            echo "Test deployment $(date)" > deployment_test.txt
+            
+            # Verify file was created
+            if [ -f "deployment_test.txt" ]; then
+              echo "✅ File creation successful"
+              echo "File contents:"
+              cat deployment_test.txt
+            else
+              echo "❌ File creation failed"
+            fi
+            
+            # Test directory listing with new file
+            echo -e "\nDirectory contents with test file:"
+            ls -la
+            
+            # Test file removal
+            echo -e "\nRemoving test file..."
+            rm -f deployment_test.txt
+            
+            # Verify file was removed
+            if [ ! -f "deployment_test.txt" ]; then
+              echo "✅ File removal successful"
+            else
+              echo "❌ File removal failed"
+            fi
+            
+            echo -e "\nFinal directory contents:"
+            ls -la
+            
+            echo -e "\n=== FILE OPERATIONS TEST COMPLETE ==="
             echo -e "\n=== ENVIRONMENT CHECK COMPLETE ==="
