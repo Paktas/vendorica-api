@@ -97,9 +97,13 @@ jobs:
           port: ${{ secrets.CLOUDWAYS_PORT }}
           script: |
             echo "=== SERVER ENVIRONMENT CHECK ==="
-            echo "Current directory: $(pwd)"
+            echo "Initial directory: $(pwd)"
             echo "Current user: $(whoami)"
             echo "Server hostname: $(hostname)"
+            
+            echo -e "\n=== NAVIGATING TO PUBLIC_HTML ==="
+            cd public_html
+            echo "Now in directory: $(pwd)"
             
             echo -e "\n=== DIRECTORY CONTENTS ==="
             ls -la
