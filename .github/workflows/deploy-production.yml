@@ -198,37 +198,45 @@ jobs:
             echo "Fixing npm cache permissions..."
             sudo chown -R 1012:33 "/home/1462634.cloudwaysapps.com/jwnbrgtuur/.npm" 2>/dev/null || true
             
-            # Install PM2 globally if not present
-            if ! command -v pm2 > /dev/null 2>&1; then
-              echo "Installing PM2 globally..."
+            # Check PM2 installation status
+            echo "=== PM2 INSTALLATION DIAGNOSTICS ==="
+            echo "Current user: $(whoami)"
+            echo "Current PATH: $PATH"
+            echo "npm prefix: $(npm config get prefix)"
+            echo "npm global bin: $(npm bin -g 2>/dev/null || echo 'not available')"
+            
+            # Check if PM2 is available anywhere
+            echo -e "\nSearching for existing PM2 installations:"
+            find /usr /home -name "pm2" -type f 2>/dev/null | head -10 || echo "No PM2 found with find command"
+            
+            # Check if there's a system-wide PM2
+            if sudo which pm2 2>/dev/null; then
+              echo "✅ System PM2 found: $(sudo which pm2)"
+              echo "System PM2 version: $(sudo pm2 --version 2>/dev/null || echo 'version check failed')"
+            fi
+            
+            # Check current user PM2
+            if command -v pm2 > /dev/null 2>&1; then
+              echo "✅ User PM2 found: $(which pm2)"
+              echo "User PM2 version: $(pm2 --version)"
+            else
+              echo "❌ No PM2 available for current user"
+              
+              # Try installing for current user
+              echo "Attempting to install PM2 for current user..."
               npm install -g pm2
               
-              # Refresh PATH and verify PM2 installation
+              # Refresh PATH
               export PATH="$(npm config get prefix)/bin:$PATH"
-              hash -r  # Clear bash command cache 
+              hash -r
               
               if command -v pm2 > /dev/null 2>&1; then
-                echo "✅ PM2 installed successfully: $(which pm2)"
+                echo "✅ PM2 installed for user: $(which pm2)"
                 echo "PM2 version: $(pm2 --version)"
               else
-                # Try common npm global bin locations
-                NPM_PREFIX=$(npm config get prefix)
-                if [ -f "$NPM_PREFIX/bin/pm2" ]; then
-                  echo "✅ PM2 found at: $NPM_PREFIX/bin/pm2"
-                  export PATH="$NPM_PREFIX/bin:$PATH"
-                  echo "PM2 version: $(pm2 --version)"
-                else
-                  echo "❌ PM2 installation failed - not found in expected locations"
-                  echo "npm prefix: $NPM_PREFIX"
-                  echo "Checking for PM2 in common locations:"
-                  ls -la /usr/local/bin/pm2 2>/dev/null || echo "Not in /usr/local/bin/"
-                  ls -la ~/.npm-global/bin/pm2 2>/dev/null || echo "Not in ~/.npm-global/bin/"
-                  exit 1
-                fi
+                echo "❌ PM2 installation failed for current user"
+                echo "Will attempt to use system PM2 or skip PM2 for this deployment"
               fi
-            else
-              echo "✅ PM2 already installed: $(which pm2)"
-              echo "PM2 version: $(pm2 --version)"
             fi
             
             echo "Installing production dependencies..."
@@ -278,8 +286,32 @@ jobs:
           script: |
             cd public_html
             
-            # PM2 should be available from installation stage
+            # PM2 process management with fallback options
             echo "Starting PM2 process management..."
+            
+            # Determine which PM2 to use
+            PM2_CMD=""
+            if command -v pm2 > /dev/null 2>&1; then
+              PM2_CMD="pm2"
+              echo "Using user PM2: $(which pm2)"
+            elif sudo which pm2 > /dev/null 2>&1; then
+              PM2_CMD="sudo pm2"
+              echo "Using system PM2: $(sudo which pm2)"
+            else
+              echo "❌ No PM2 available - will run application directly"
+              # Start app directly without PM2
+              if [ -f "dist/index.js" ]; then
+                echo "Starting application directly with Node.js..."
+                nohup node dist/index.js > ~/logs/vendorica-api.log 2>&1 &
+                echo $! > ~/vendorica-api.pid
+                echo "✅ Application started with PID: $(cat ~/vendorica-api.pid)"
+                echo "⚠️ Application running without PM2 process management"
+                exit 0
+              else
+                echo "❌ No dist/index.js found"
+                exit 1
+              fi
+            fi
             
             # Verify logs directory exists
             if [ -d "$HOME/logs" ]; then
@@ -297,13 +329,13 @@ jobs:
               
               # Try starting with explicit syntax
               echo "Attempting to start PM2 process..."
-              pm2 start ecosystem.config.mjs --env production 2>&1 || {
+              $PM2_CMD start ecosystem.config.mjs --env production 2>&1 || {
                 echo "❌ PM2 start with .mjs failed, trying alternative approach..."
                 
                 # Alternative: start directly with script path
                 if [ -f "dist/index.js" ]; then
                   echo "Starting PM2 directly with script path..."
-                  pm2 start dist/index.js --name vendorica-api --instances 2 --env production 2>&1
+                  $PM2_CMD start dist/index.js --name vendorica-api --instances 2 --env production 2>&1
                 else
                   echo "❌ dist/index.js not found"
                   exit 1
@@ -314,7 +346,7 @@ jobs:
               exit 1
             fi
             
-            pm2 save
+            $PM2_CMD save
             echo "✅ PM2 process configured"
 
       - name: 🏁 Deployment Summary
@@ -355,16 +387,29 @@ jobs:
             # Check PM2 logs for port information
             echo -e "\nPM2 Application Logs (last 10 lines):"
             
-            # Check PM2 status  
+            # Check PM2 status with fallback
             if command -v pm2 > /dev/null 2>&1; then
-              echo "✅ PM2: Available"
+              echo "✅ PM2: Available (user)"
               pm2 status
-              
-              # Show recent logs
               echo -e "\nRecent application logs:"
-              pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No logs available"
+              pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
+            elif sudo which pm2 > /dev/null 2>&1; then
+              echo "✅ PM2: Available (system)"
+              sudo pm2 status
+              echo -e "\nRecent application logs:"
+              sudo pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
             else
-              echo "⚠️ PM2: Not available"
+              echo "⚠️ PM2: Not available - checking direct process"
+              if [ -f ~/vendorica-api.pid ]; then
+                PID=$(cat ~/vendorica-api.pid)
+                if ps -p $PID > /dev/null; then
+                  echo "✅ Application running directly with PID: $PID"
+                  echo -e "\nRecent application logs:"
+                  tail -5 ~/logs/vendorica-api.log 2>/dev/null || echo "No direct logs available"
+                else
+                  echo "❌ Application not running"
+                fi
+              fi
             fi
             
             echo -e "\n📁 Deployment path: $(pwd)"
