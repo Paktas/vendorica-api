@@ -88,7 +88,7 @@ jobs:
             echo "User: $(whoami)"
             echo "Server: $(hostname)"
 
-      - name: Deploy to Cloudways
+      - name: Check Server Environment
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -96,122 +96,44 @@ jobs:
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
           script: |
-            echo "=== STARTING DEPLOYMENT ==="
-            pwd
+            echo "=== SERVER ENVIRONMENT CHECK ==="
+            echo "Current directory: $(pwd)"
+            echo "Current user: $(whoami)"
+            echo "Server hostname: $(hostname)"
             
-            # We are already in public_html directory - work directly here
-            echo "Working in directory: $(pwd)"
+            echo -e "\n=== DIRECTORY CONTENTS ==="
+            ls -la
             
-            # Check if this is first deployment (no git repo)
-            if [ ! -d ".git" ]; then
-              echo "First deployment detected - cloning repository into current directory..."
-              
-              # List current directory contents for debugging
-              echo "Current directory contents:"
-              ls -la
-              
-              # Remove all files and directories (including hidden ones) but stay in current directory
-              find . -mindepth 1 -delete 2>/dev/null || true
-              
-              # Verify directory is empty
-              echo "After cleanup:"
-              ls -la
-              
-              # Clone repository directly into current directory (public_html)
-              git clone https://github.com/Paktas/vendorica-api.git .
-              
-              echo "Repository cloned successfully into public_html"
-              echo "Repository contents:"
-              ls -la
-            else
-              echo "Existing repository found - pulling latest changes..."
-              git fetch origin
-              git reset --hard origin/main
-            fi
+            echo -e "\n=== AVAILABLE PACKAGES ==="
+            echo "Node.js:"
+            which node && node --version || echo "Node.js not found"
             
-            echo "=== INSTALLING DEPENDENCIES ==="
+            echo -e "npm:"
+            which npm && npm --version || echo "npm not found"
             
-            # Check if we're in the right directory with package.json
-            if [ -f "package.json" ]; then
-              echo "✅ package.json found"
-            else
-              echo "❌ package.json not found in current directory"
-              echo "Current directory contents:"
-              ls -la
-              exit 1
-            fi
+            echo -e "Git:"
+            which git && git --version || echo "Git not found"
             
-            # Fix any permission issues
-            echo "Setting proper permissions..."
-            chmod -R 755 .
+            echo -e "PM2:"
+            which pm2 && pm2 --version || echo "PM2 not found"
             
-            # Use npm install instead of npm ci since package-lock.json might not exist
-            echo "Running npm install..."
-            npm install --omit=dev
+            echo -e "Python:"
+            which python3 && python3 --version || echo "Python not found"
             
-            echo "=== BUILDING APPLICATION ==="
-            npm run build
+            echo -e "PHP:"
+            which php && php --version || echo "PHP not found"
             
-            echo "=== MANAGING PM2 PROCESS ==="
+            echo -e "\n=== SYSTEM INFO ==="
+            echo "OS: $(uname -a)"
+            echo "Disk space:"
+            df -h .
+            echo "Memory:"
+            free -h || echo "free command not available"
             
-            # Check if PM2 is available
-            if command -v pm2 > /dev/null 2>&1; then
-              echo "PM2 found - managing process..."
-              
-              # Check if PM2 process exists
-              if pm2 describe vendorica-api > /dev/null 2>&1; then
-                echo "Reloading existing PM2 process..."
-                pm2 reload vendorica-api --update-env
-              else
-                echo "Starting new PM2 process..."
-                pm2 start ecosystem.config.js
-              fi
-              
-              # Save PM2 configuration
-              pm2 save
-              
-              echo "=== DEPLOYMENT COMPLETED ==="
-              pm2 status
-              
-            else
-              echo "PM2 not found - please install PM2 or contact Cloudways support"
-              echo "To install PM2: npm install -g pm2"
-              echo "Or request PM2 installation from Cloudways support"
-              
-              echo "=== DEPLOYMENT COMPLETED (WITHOUT PM2) ==="
-              echo "Application files deployed successfully"
-              echo "PM2 installation required to run the application"
-            fi
+            echo -e "\n=== PERMISSIONS ==="
+            echo "Directory permissions:"
+            ls -ld .
+            echo "User permissions:"
+            id
             
-      - name: Verify deployment
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.CLOUDWAYS_HOST }}
-          username: ${{ secrets.CLOUDWAYS_USER }}
-          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          port: ${{ secrets.CLOUDWAYS_PORT }}
-          script: |
-            echo "=== DEPLOYMENT VERIFICATION ==="
-            
-            # Check if PM2 is available for status check
-            if command -v pm2 > /dev/null 2>&1; then
-              echo "PM2 Status:"
-              pm2 status
-              
-              # Wait a moment for the application to start
-              sleep 5
-              
-              # Test if the application is responding (if health endpoint exists)
-              echo "Testing application health..."
-              curl -f http://localhost:3000/health 2>/dev/null && echo "✅ Health check passed" || echo "⚠️ Health check failed (endpoint may not exist yet)"
-            else
-              echo "PM2 not available - cannot check process status"
-              echo "Deployment files are in place, but PM2 is required to run the application"
-              
-              # Check if built files exist
-              if [ -f "dist/index.js" ]; then
-                echo "✅ Built application files found in dist/"
-              else
-                echo "❌ Built application files not found - build may have failed"
-              fi
-            fi
+            echo -e "\n=== ENVIRONMENT CHECK COMPLETE ==="
