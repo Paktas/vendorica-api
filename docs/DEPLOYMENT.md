@@ -40,18 +40,49 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
    - Enable SSL certificate (Let's Encrypt - automatic)
 
 3. **SSH Access Setup**
-   - Generate SSH key pair: `ssh-keygen -t rsa -b 4096`
-   - Add public key to Cloudways SSH Keys
-   - Note server details: IP, username (`master`), port
+   
+   **Cloudways Application Access**:
+   1. In Cloudways: Navigate to your Application → Application Access
+   2. Note your application username (e.g., `jwnbrgtuur`)
+   3. WebRoot path: `/home/{account_id}.cloudwaysapps.com/{app_id}/public_html`
+   4. WebLogs path: `/home/{account_id}.cloudwaysapps.com/{app_id}/logs`
+   
+   **How to find your values:**
+   - **Account ID**: Found in Cloudways URL or when you SSH (e.g., `1462634`)
+   - **App ID**: Your SSH username shown in Cloudways Application Access (e.g., `jwnbrgtuur`)
+   - **WebRoot**: Shown when you log in via SSH: `WebRoot: [/home/{account_id}.cloudwaysapps.com/{app_id}/public_html]`
+   
+   **For this deployment:**
+   - Account ID: `1462634`
+   - App ID: `jwnbrgtuur`
+   - WebRoot: `/home/1462634.cloudwaysapps.com/jwnbrgtuur/public_html`
+   
+   **Generate SSH Key Pair**:
+   ```bash
+   ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api"
+   # Save as: vendorica-api-deploy (or similar name)
+   # Don't use passphrase for automated deployments
+   ```
+   
+   **Add Public Key to Cloudways**:
+   1. Copy public key: `cat vendorica-api-deploy.pub`
+   2. In Cloudways: Application Access → Add SSH Key
+   3. Paste the public key content
+   4. Save changes
+   
+   **Note Server Details**:
+   - Server IP: Your Cloudways server IP
+   - Username: `{app_id}` (Your Cloudways application ID)
+   - Port: Usually 22 (check your server settings)
 
 ### 2. Initial Server Setup
 
 ```bash
-# SSH into your Cloudways server
-ssh master@your-server-ip
+# SSH into your Cloudways server with deployment user
+ssh {app_id}@your-server-ip
 
-# Navigate to application directory
-cd /home/master/applications/{app_name}/public_html
+# Navigate to API directory (Cloudways webroot)
+cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
 
 # Clone repository
 git clone https://github.com/Paktas/vendorica-api.git .
@@ -111,8 +142,8 @@ API_DESCRIPTION=Enterprise vendor risk management platform API
 
 **Option 2**: Install locally (if permissions allow)
 ```bash
-# Install PM2 in your application directory
-cd /home/master/applications/{app_name}/public_html
+# Install PM2 in your API directory
+cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
 npm install pm2
 npx pm2 start ecosystem.config.js
 ```
@@ -125,7 +156,7 @@ module.exports = {
   apps: [{
     name: 'vendorica-api',
     script: './dist/index.js',
-    cwd: '/home/master/applications/{app_name}/public_html',
+    cwd: '/home/{account_id}.cloudwaysapps.com/{app_id}/public_html',
     
     // Process configuration
     instances: 2, // Use 2 instances for load balancing
@@ -193,10 +224,11 @@ ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api"
 # Don't use passphrase for automated deployments
 ```
 
-**Step 2: Add Public Key to Cloudways**
+**Step 2: Add Public Key to Application User**
 1. Copy public key: `cat vendorica-api-deploy.pub`
-2. In Cloudways: Server Management → SSH Keys → Add SSH Key
-3. Paste the public key and save
+2. In Cloudways: Application → Application Access → Edit `vendorica_api_deploy` user
+3. Add the SSH public key to this user
+4. Save changes
 
 **Step 3: Create GitHub Secrets**
 
@@ -207,7 +239,7 @@ Create these secrets:
 | Secret Name | Value | Description |
 |------------|--------|-------------|
 | `CLOUDWAYS_HOST` | `164.90.xxx.xxx` | Your Cloudways server IP address |
-| `CLOUDWAYS_USER` | `master` | SSH username (always `master` on Cloudways) |
+| `CLOUDWAYS_USER` | `{app_id}` | Your Cloudways application ID |
 | `CLOUDWAYS_SSH_KEY` | `-----BEGIN RSA PRIVATE KEY-----...` | Contents of your private key file |
 | `CLOUDWAYS_PORT` | `22` | SSH port (default is 22, check your server) |
 
@@ -258,7 +290,7 @@ jobs:
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
           script: |
-            cd /home/master/applications/{app_name}/public_html
+            cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
             git pull origin main
             npm ci --only=production
             npm run build
