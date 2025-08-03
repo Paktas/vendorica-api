@@ -33,6 +33,10 @@ export const swaggerDefinition = {
       - Internal API: \`http://localhost:3010/internal\`
       - Public API (future): \`http://localhost:3010/v1\`
       - Production: \`https://api.vendorica.com/internal\`
+      
+      ## Server Configuration
+      The Scalar interface will automatically use the correct server based on your selection.
+      All endpoint paths include the \`/internal\` prefix for the internal API.
     `,
     contact: {
       name: 'Vendorica Development Team',
@@ -45,16 +49,16 @@ export const swaggerDefinition = {
   },
   servers: [
     {
-      url: '/internal',
-      description: 'Current server - Internal API'
+      url: '/',
+      description: 'Current server - API Root'
     },
     {
-      url: 'http://localhost:3010/internal',
-      description: 'Development server - Internal API'
+      url: 'http://localhost:3010',
+      description: 'Development server - API Root'
     },
     {
-      url: 'https://app.vendorica.com/internal',
-      description: 'Production server - Internal API'
+      url: 'https://api.vendorica.com',
+      description: 'Production server - API Root'
     }
   ],
   components: {
