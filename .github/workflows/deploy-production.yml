@@ -75,7 +75,7 @@ jobs:
           PORT_VALUE: ${{ secrets.CLOUDWAYS_PORT }}
 
       - name: Test SSH Connection
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
           username: ${{ secrets.CLOUDWAYS_USER }}
@@ -89,7 +89,7 @@ jobs:
             echo "Server: $(hostname)"
 
       - name: Check Server Environment
-        uses: appleboy/ssh-action@v1.0.0
+        uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
           username: ${{ secrets.CLOUDWAYS_USER }}
