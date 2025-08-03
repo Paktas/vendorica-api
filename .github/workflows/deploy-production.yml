@@ -128,10 +128,13 @@ jobs:
               rm -rf .git
             fi
             
-            # Remove any existing project files for clean test
+            # Remove ALL files and directories for clean test
             echo "Cleaning directory for git clone test..."
-            find . -mindepth 1 -name "*.js" -o -name "*.json" -o -name "*.md" -o -name "src" -o -name "dist" | head -10
-            find . -mindepth 1 -name "*.js" -o -name "*.json" -o -name "*.md" -o -name "src" -o -name "dist" -exec rm -rf {} +
+            echo "Files to be removed:"
+            ls -la
+            
+            # Remove everything except . and ..
+            find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
             
             echo "Directory before clone:"
             ls -la
