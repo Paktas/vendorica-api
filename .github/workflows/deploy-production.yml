@@ -95,7 +95,6 @@ jobs:
           username: ${{ secrets.CLOUDWAYS_USER }}
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
-          script_stop: true
           script: |
             echo "=== SERVER ENVIRONMENT CHECK ==="
             echo "Initial directory: $(pwd)"
