@@ -186,13 +186,38 @@ pm2 startup
 
 ### 7. GitHub Actions CI/CD Setup
 
-Add secrets to your GitHub repository (`Settings > Secrets and variables > Actions`):
-
+**Step 1: Generate SSH Key Pair** (if not already done)
+```bash
+ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api"
+# Save as: vendorica-api-deploy (or similar name)
+# Don't use passphrase for automated deployments
 ```
-CLOUDWAYS_HOST=your-server-ip
-CLOUDWAYS_USER=master  
-CLOUDWAYS_SSH_KEY=your-private-ssh-key
-CLOUDWAYS_PORT=22
+
+**Step 2: Add Public Key to Cloudways**
+1. Copy public key: `cat vendorica-api-deploy.pub`
+2. In Cloudways: Server Management → SSH Keys → Add SSH Key
+3. Paste the public key and save
+
+**Step 3: Create GitHub Secrets**
+
+Navigate to your GitHub repository → Settings → Secrets and variables → Actions → New repository secret
+
+Create these secrets:
+
+| Secret Name | Value | Description |
+|------------|--------|-------------|
+| `CLOUDWAYS_HOST` | `164.90.xxx.xxx` | Your Cloudways server IP address |
+| `CLOUDWAYS_USER` | `master` | SSH username (always `master` on Cloudways) |
+| `CLOUDWAYS_SSH_KEY` | `-----BEGIN RSA PRIVATE KEY-----...` | Contents of your private key file |
+| `CLOUDWAYS_PORT` | `22` | SSH port (default is 22, check your server) |
+
+**Important**: For `CLOUDWAYS_SSH_KEY`, copy the ENTIRE private key including the BEGIN and END lines:
+```
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEA...
+[full key content]
+...
+-----END RSA PRIVATE KEY-----
 ```
 
 Create deployment workflow:

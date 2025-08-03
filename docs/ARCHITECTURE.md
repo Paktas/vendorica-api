@@ -77,7 +77,10 @@ vendorica-api/
 ├── ecosystem.config.js     # PM2 configuration
 ├── package.json            # Dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
-└── vite.config.ts          # Vite configuration
+├── vite.config.ts          # Vite configuration
+└── .github/
+    └── workflows/
+        └── deploy-production.yml # CI/CD pipeline
 ```
 
 ## Environment Configuration
