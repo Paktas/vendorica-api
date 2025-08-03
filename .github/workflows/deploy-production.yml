@@ -183,6 +183,31 @@ jobs:
               
               echo -e "\n=== NPM INSTALL TEST COMPLETE ==="
               
+              echo -e "\n=== TESTING NPM BUILD ==="
+              
+              # Test npm run build
+              echo "Running npm run build..."
+              npm run build
+              
+              # Check if dist directory was created
+              if [ -d "dist" ]; then
+                echo "✅ npm run build successful"
+                echo "Build output:"
+                ls -la dist/
+                
+                echo -e "\nChecking key build files:"
+                [ -f "dist/index.js" ] && echo "✅ dist/index.js found" || echo "❌ dist/index.js missing"
+                [ -f "dist/app.js" ] && echo "✅ dist/app.js found" || echo "⚠️ dist/app.js not found (may not exist)"
+                
+                echo -e "\nBuild directory size:"
+                du -sh dist/ 2>/dev/null || echo "Size check failed"
+                
+              else
+                echo "❌ npm run build failed - dist directory not found"
+              fi
+              
+              echo -e "\n=== NPM BUILD TEST COMPLETE ==="
+              
             else
               echo "❌ Git clone failed"
             fi
