@@ -1,0 +1,52 @@
+name: Deploy to Cloudways Production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          
+      - name: Install dependencies and build
+        run: |
+          npm ci
+          npm run build
+          
+      - name: Deploy to Cloudways
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            # SSH logs directly into public_html, so we're already in the right place
+            pwd  # Verify: /home/1462634.cloudwaysapps.com/jwnbrgtuur/public_html
+            git pull origin main
+            npm ci --only=production
+            npm run build
+            pm2 reload ecosystem.config.js --update-env
+            pm2 save
+            
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            pm2 status
+            curl -f https://api.vendorica.com/health || exit 1
