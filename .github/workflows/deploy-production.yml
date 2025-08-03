@@ -281,6 +281,17 @@ jobs:
             if [ -n "$PM2_PATH" ]; then
               echo "PM2 found at: $PM2_PATH"
               
+              # Create logs directory
+              mkdir -p logs
+              
+              # Verify ecosystem config exists
+              if [ -f "ecosystem.config.js" ]; then
+                echo "✅ ecosystem.config.js found"
+              else
+                echo "❌ ecosystem.config.js missing"
+                exit 1
+              fi
+              
               # Check if process exists
               if $PM2_PATH describe vendorica-api > /dev/null 2>&1; then
                 echo "Reloading existing PM2 process..."
