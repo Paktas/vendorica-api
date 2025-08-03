@@ -8,6 +8,11 @@ export class DocsController {
    */
   static async serveSwaggerUI(req: Request, res: Response) {
     try {
+      // Get the base URL from the request (completely dynamic - no hardcoded values)
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
+      const host = req.headers['x-forwarded-host'] || req.headers.host
+      const baseUrl = `${protocol}://${host}`
+      
       const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,7 +26,7 @@ export class DocsController {
 <body>
   <script
     id="api-reference"
-    data-url="/docs/spec.json"
+    data-url="${baseUrl}/docs/spec.json"
     data-configuration='${JSON.stringify({
       theme: 'default',
       layout: 'modern',
@@ -55,8 +60,24 @@ export class DocsController {
    */
   static async serveOpenAPISpec(req: Request, res: Response) {
     try {
+      // Get the base URL from the request (completely dynamic - no hardcoded values)
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
+      const host = req.headers['x-forwarded-host'] || req.headers.host
+      const baseUrl = `${protocol}://${host}`
+      
+      // Create a dynamic spec with only the current server URL
+      const dynamicSpec = {
+        ...swaggerSpec,
+        servers: [
+          {
+            url: baseUrl,
+            description: 'Current server'
+          }
+        ]
+      }
+      
       res.setHeader('Content-Type', 'application/json')
-      res.status(200).json(swaggerSpec)
+      res.status(200).json(dynamicSpec)
     } catch (error) {
       console.error('Error serving OpenAPI spec:', error)
       sendInternalError(res, 'Failed to load OpenAPI specification')
