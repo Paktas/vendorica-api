@@ -38,6 +38,20 @@ import { UserController } from '@controllers/user.js'
 import { AuthService } from '@services/auth.js'
 ```
 
+### 6. API Documentation Strategy
+- **Technology**: Scalar API Reference (OpenAPI 3.0)
+- **Dynamic Server URLs**: Automatically detects current server (no hardcoded values)
+- **Universal**: Works with any documentation tool (Scalar, SwaggerUI, etc.)
+- **Environment Agnostic**: Same configuration works in dev/staging/prod
+- **Security**: JWT Bearer token authentication integrated
+
+### 7. API Architecture Design
+- **Internal API** (`/internal/*`): Backend for Vendorica application
+- **Public API** (`/v1/*`): Future public-facing API for external developers
+- **Health Endpoints**: Simple monitoring and status checks
+- **Documentation Routes**: Interactive API documentation at `/docs`
+- **Separation of Concerns**: Clear distinction between internal and public APIs
+
 ## Directory Structure
 
 ```
@@ -57,8 +71,8 @@ vendorica-api/
 │   └── index.ts            # Application entry point
 ├── dist/                   # Compiled JavaScript (production)
 ├── logs/                   # PM2 log files
-├── .env.development        # Development environment
-├── .env.production         # Production environment
+├── .env.development        # Development environment (tracked)
+├── .env.production         # Production environment (IGNORED by git)
 ├── ecosystem.config.js     # PM2 configuration
 ├── package.json            # Dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
@@ -119,6 +133,12 @@ CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
 - **Process Manager**: PM2 (cluster mode, 2 instances)
 - **Web Server**: Apache (reverse proxy)
 - **Monitoring**: PM2 built-in monitoring
+
+### Documentation Tools
+- **API Reference**: Scalar (OpenAPI 3.0 compliant)
+- **Interactive Testing**: Built-in API testing interface
+- **Auto-generation**: Spec generated from JSDoc comments
+- **Dynamic URLs**: Server detection without hardcoded values
 
 ## Pros and Cons
 
@@ -185,6 +205,13 @@ TypeScript path aliases are resolved during build time by Vite, ensuring clean i
 - Development: Single process with HMR
 - Production: PM2 cluster mode with 2 instances for load distribution
 
+### Security Architecture
+- **JWT Authentication**: Secure token-based authentication (replaced insecure base64)
+- **Token Management**: 7-day expiration with refresh capabilities
+- **Standardized Errors**: Consistent error responses with request tracking
+- **Environment Security**: Production secrets excluded from git (.env.production ignored)
+- **Request Tracking**: Request IDs for debugging and audit trails
+
 ## Platform Agnostic Deployment
 
 The architecture supports simple deployment on any platform:
@@ -195,3 +222,23 @@ The architecture supports simple deployment on any platform:
 4. **Flexible Web Server**: Works with Apache, Nginx, or any reverse proxy
 
 This design balances modern development experience with production reliability while maintaining simplicity and platform independence.
+
+## Recent Architectural Improvements
+
+### Security Enhancements
+- **JWT Authentication System**: Replaced insecure base64 tokens with proper JWT implementation
+- **Environment Security**: `.env.production` excluded from git to prevent secrets exposure
+- **Standardized Error Handling**: Consistent error responses with request tracking and timestamps
+- **Request ID Middleware**: Unique request identifiers for debugging and audit trails
+
+### Documentation Architecture
+- **Dynamic Server Detection**: API documentation automatically adapts to current environment
+- **Universal Tool Support**: Configuration works with any OpenAPI-compatible tool
+- **Zero Hardcoded Values**: No maintenance needed for different environments or ports
+- **Interactive Testing**: Built-in API testing directly from documentation interface
+
+### API Design Patterns
+- **Clear Route Separation**: `/internal/*` for app backend, `/v1/*` for future public API
+- **Consistent Response Format**: Standardized success/error response structures
+- **Comprehensive OpenAPI Spec**: Fully documented endpoints with examples and schemas
+- **Production-Ready**: Battle-tested patterns for scalability and maintainability
