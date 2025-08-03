@@ -1,0 +1,35 @@
+{
+  "version": "009",
+  "name": "fix_users_table_uuid_generation",
+  "description": "Add UUID auto-generation to users.id column and ensure consistent org_id column naming across all tables",
+  "author": "Development Team",
+  "created_date": "2025-07-27",
+  "requires": ["001", "002", "003", "004", "005"],
+  "breaking_changes": false,
+  "rollback_safe": true,
+  "tables_affected": [
+    "users",
+    "vendors", 
+    "framework_fields",
+    "framework_options",
+    "framework_field_assignments"
+  ],
+  "operations": [
+    "ALTER COLUMN",
+    "RENAME COLUMN",
+    "CREATE INDEX",
+    "DROP INDEX",
+    "ADD CONSTRAINT",
+    "DROP CONSTRAINT"
+  ],
+  "validation_queries": [
+    "SELECT column_default FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id';",
+    "SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name IN ('org_id', 'organization_id');"
+  ],
+  "notes": [
+    "This migration fixes the critical issue where users.id was not auto-generating UUIDs",
+    "It also ensures consistent naming of organization reference columns as 'org_id'",
+    "The migration is idempotent and safe to run multiple times",
+    "All foreign key constraints and indexes are properly updated"
+  ]
+}

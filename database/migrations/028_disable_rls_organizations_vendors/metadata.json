@@ -1,0 +1,8 @@
+{
+  "version": "028",
+  "name": "disable_rls_organizations_vendors",
+  "description": "Disable RLS on organizations and vendors tables for custom authentication compatibility",
+  "author": "Claude",
+  "created_at": "2025-01-31",
+  "dependencies": ["026_disable_rls_api_tables"]
+}

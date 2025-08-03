@@ -1,0 +1,10 @@
+{
+  "version": "007",
+  "name": "update_framework_fields_schema",
+  "description": "Update framework_fields table schema to match TypeScript interface",
+  "author": "Development Team",
+  "date": "2025-07-26",
+  "dependencies": ["006"],
+  "breaking_change": true,
+  "rollback_supported": true
+}
