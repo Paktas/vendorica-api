@@ -10,21 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout code
+      - name: 📥 Checkout code
         uses: actions/checkout@v4
         
-      - name: Setup Node.js
+      - name: 🟢 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           
-      - name: Install dependencies and build
+      - name: 📦 Install dependencies and build
         run: |
           npm ci
           npm run build
           
-      - name: Debug GitHub Secrets
+      - name: 🔍 Debug GitHub Secrets
         run: |
           echo "=== GITHUB SECRETS DEBUG ==="
           
@@ -74,7 +74,7 @@ jobs:
           USER_VALUE: ${{ secrets.CLOUDWAYS_USER }}
           PORT_VALUE: ${{ secrets.CLOUDWAYS_PORT }}
 
-      - name: Test SSH Connection
+      - name: 🔐 Test SSH Connection
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -88,7 +88,7 @@ jobs:
             echo "User: $(whoami)"
             echo "Server: $(hostname)"
 
-      - name: Check Server Environment
+      - name: 🚀 Deploy and Test Environment
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -159,6 +159,10 @@ jobs:
               git status --porcelain || echo "Git status check failed"
               
               echo -e "\n=== TESTING NPM INSTALL ==="
+              
+              # Fix npm cache permissions first
+              echo "Fixing npm cache permissions..."
+              sudo chown -R 1012:33 "/home/1462634.cloudwaysapps.com/jwnbrgtuur/.npm" 2>/dev/null || echo "Cache permission fix not needed"
               
               # Test npm install
               echo "Running npm install..."
