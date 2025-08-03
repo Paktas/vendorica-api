@@ -356,6 +356,30 @@ jobs:
             echo "✅ Dependencies: Installed" 
             echo "✅ Build: Completed"
             
+            # Production Environment Check
+            echo -e "\n🔍 Production Environment Check:"
+            
+            # Check for environment file
+            if [ -f ".env.production" ]; then
+              echo "✅ .env.production file exists"
+              echo "Environment variables:"
+              grep -E "^(PORT|NODE_ENV|API_BASE_URL)" .env.production 2>/dev/null || echo "No PORT/NODE_ENV/API_BASE_URL found"
+            else
+              echo "❌ .env.production file missing - this may cause issues!"
+              echo "App will use default configuration"
+            fi
+            
+            # Check what port the app is using
+            echo -e "\nChecking application port binding..."
+            sleep 5  # Give PM2 time to fully start
+            
+            # Show all listening ports
+            echo "All processes listening on ports:"
+            netstat -tlnp 2>/dev/null | grep LISTEN
+            
+            # Check PM2 logs for port information
+            echo -e "\nPM2 Application Logs (last 10 lines):"
+            
             # Source Cloudways aliases for PM2 status check
             [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
             
@@ -374,6 +398,10 @@ jobs:
             if [ -n "$PM2_PATH" ]; then
               echo "✅ PM2: Configured"
               $PM2_PATH status
+              
+              # Show recent logs
+              echo -e "\nRecent application logs:"
+              $PM2_PATH logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No logs available"
             else
               echo "⚠️ PM2: Not available"
             fi
