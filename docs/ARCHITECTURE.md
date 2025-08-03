@@ -224,14 +224,29 @@ TypeScript path aliases are resolved during build time by Vite, ensuring clean i
 - **Environment Security**: All environment files ignored by git (only .env.example tracked)
 - **Request Tracking**: Request IDs for debugging and audit trails
 
-## Platform Agnostic Deployment
+## Production Deployment
 
-The architecture supports simple deployment on any platform:
+### Recommended: Cloudways Managed Hosting
 
-1. **2-Command Deployment**: `npm run build` + `npm start`
-2. **Environment-Based Configuration**: All settings from .env files
-3. **Standard Node.js**: No platform-specific dependencies
-4. **Flexible Web Server**: Works with Apache, Nginx, or any reverse proxy
+**Architecture**: `GitHub → GitHub Actions → Cloudways VPS → Apache → PM2 → Node.js`
+
+**Benefits**:
+- ✅ **Managed Infrastructure**: Cloudways handles server maintenance
+- ✅ **Automated Deployments**: GitHub Actions CI/CD pipeline  
+- ✅ **Apache Auto-Configuration**: No manual web server setup needed
+- ✅ **PM2 Support**: Can be installed by Cloudways support team
+- ✅ **SSL Certificates**: Let's Encrypt automatic renewal
+- ✅ **Easy Scaling**: Vertical scaling via dashboard
+- ✅ **Built-in Monitoring**: Server metrics and performance tracking
+
+### Alternative Deployment Options
+
+The architecture also supports deployment on:
+
+1. **Manual VPS**: Self-managed servers (DigitalOcean, Linode, etc.)
+2. **Cloud Platforms**: AWS EC2, Google Compute Engine, Azure VMs
+3. **Container Platforms**: Docker + Kubernetes, Railway, DigitalOcean App Platform
+4. **Serverless**: Vercel, Netlify Functions (with modifications)
 
 This design balances modern development experience with production reliability while maintaining simplicity and platform independence.
 
@@ -254,3 +269,10 @@ This design balances modern development experience with production reliability w
 - **Consistent Response Format**: Standardized success/error response structures
 - **Comprehensive OpenAPI Spec**: Fully documented endpoints with examples and schemas
 - **Production-Ready**: Battle-tested patterns for scalability and maintainability
+
+### Deployment Architecture
+- **Cloudways Integration**: Optimized for managed hosting with automatic configuration
+- **GitHub Actions CI/CD**: Automated deployments with testing and verification
+- **Zero-Configuration Apache**: Web server automatically configured by Cloudways
+- **PM2 Clustering**: Process management with load balancing (requires installation)
+- **SSL/Security**: Automatic certificate management and security headers
