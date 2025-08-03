@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
           
       - name: Install dependencies and build
@@ -32,12 +32,34 @@ jobs:
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
           script: |
-            # SSH logs directly into public_html, so we're already in the right place
-            pwd  # Verify: /home/1462634.cloudwaysapps.com/jwnbrgtuur/public_html
-            git pull origin main
+            # SSH logs directly into public_html, verify location
+            pwd
+            
+            # Check if this is first deployment (no git repo yet)
+            if [ ! -d ".git" ]; then
+              echo "First deployment - cloning repository..."
+              # Remove any existing files first
+              rm -rf *
+              # Clone repository
+              git clone https://github.com/Paktas/vendorica-api.git .
+            else
+              echo "Existing deployment - pulling latest changes..."
+              git pull origin main
+            fi
+            
+            # Install dependencies and build
             npm ci --only=production
             npm run build
-            pm2 reload ecosystem.config.js --update-env
+            
+            # Check if PM2 process exists
+            if pm2 describe vendorica-api > /dev/null 2>&1; then
+              echo "Reloading existing PM2 process..."
+              pm2 reload ecosystem.config.js --update-env
+            else
+              echo "Starting new PM2 process..."
+              pm2 start ecosystem.config.js
+            fi
+            
             pm2 save
             
       - name: Verify deployment
