@@ -1,0 +1,8 @@
+{
+  "version": "029",
+  "name": "create_auth_password_reset_tokens",
+  "description": "Create auth_password_reset_tokens table for secure password reset token storage",
+  "author": "Claude",
+  "created_at": "2025-01-31",
+  "dependencies": ["028_disable_rls_organizations_vendors"]
+}

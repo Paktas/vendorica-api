@@ -1,0 +1,20 @@
+{
+  "version": "014",
+  "name": "finalize_roles_migration", 
+  "description": "Complete migration to roles table system by removing old role column and finalizing constraints",
+  "type": "modify",
+  "author": "Development Team",
+  "created_at": "2025-07-27T00:00:00Z",
+  "dependencies": ["013"],
+  "affects_tables": ["users"],
+  "breaking_changes": true,
+  "requires_downtime": false,
+  "estimated_duration": "< 1 minute",
+  "notes": [
+    "BREAKING: Removes old role string column from users table",
+    "Creates users_with_roles helper view",
+    "Makes migration irreversible without proper rollback",
+    "Application code must be updated to use role_id before applying",
+    "Comprehensive verification included"
+  ]
+}
