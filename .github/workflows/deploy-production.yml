@@ -165,14 +165,24 @@ jobs:
             echo "Current directory contents:"
             ls -la
             
-            # Clean directory for fresh deployment
+            # Clean directory for fresh deployment, but preserve environment files
             if [ -d ".git" ]; then
               echo "Removing existing git repository..."
               rm -rf .git
             fi
             
-            echo "Cleaning directory..."
-            find . -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            # Backup environment files before cleaning
+            echo "Backing up environment files..."
+            [ -f ".env.production" ] && cp .env.production .env.production.backup
+            [ -f ".env.local" ] && cp .env.local .env.local.backup
+            
+            echo "Cleaning directory (preserving environment files)..."
+            find . -mindepth 1 -maxdepth 1 ! -name ".env.*.backup" -exec rm -rf {} +
+            
+            # Restore environment files
+            echo "Restoring environment files..."
+            [ -f ".env.production.backup" ] && mv .env.production.backup .env.production && echo "✅ Restored .env.production"
+            [ -f ".env.local.backup" ] && mv .env.local.backup .env.local && echo "✅ Restored .env.local"
             
             echo "Directory after cleanup:"
             ls -la
