@@ -281,8 +281,13 @@ jobs:
             if [ -n "$PM2_PATH" ]; then
               echo "PM2 found at: $PM2_PATH"
               
-              # Create logs directory
-              mkdir -p logs
+              # Verify logs directory exists
+              if [ -d "$HOME/logs" ]; then
+                echo "✅ Using existing logs directory: ~/logs/"
+              else
+                echo "❌ Logs directory not found at ~/logs/"
+                exit 1
+              fi
               
               # Verify ecosystem config exists
               if [ -f "ecosystem.config.js" ]; then

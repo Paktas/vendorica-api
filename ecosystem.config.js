@@ -10,8 +10,8 @@ module.exports = {
     watch: false,
     autorestart: true,
     max_memory_restart: '1G',
-    error_file: './logs/err.log',
-    out_file: './logs/out.log',
-    log_file: './logs/combined.log'
+    error_file: '~/logs/vendorica-api-err.log',
+    out_file: '~/logs/vendorica-api-out.log',
+    log_file: '~/logs/vendorica-api-combined.log'
   }]
 }
