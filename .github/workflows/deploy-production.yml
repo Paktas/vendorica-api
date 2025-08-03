@@ -116,7 +116,20 @@ jobs:
               echo "✅ Found Cloudways .bash_aliases file"
               source "$HOME/.bash_aliases"
               echo "PATH after sourcing: $PATH"
-              echo "PM2 alias: $(alias pm2 2>/dev/null || echo 'not set')"
+              PM2_ALIAS_FULL=$(alias pm2 2>/dev/null || echo 'not set')
+              echo "PM2 alias: $PM2_ALIAS_FULL"
+              
+              # Extract and test the PM2 path from alias
+              if [[ "$PM2_ALIAS_FULL" != "not set" ]]; then
+                PM2_ALIAS_PATH=$(echo "$PM2_ALIAS_FULL" | cut -d"'" -f2)
+                echo "PM2 alias path: $PM2_ALIAS_PATH"
+                if [ -f "$PM2_ALIAS_PATH" ]; then
+                  echo "✅ PM2 executable exists at alias path"
+                  "$PM2_ALIAS_PATH" --version 2>/dev/null || echo "❌ PM2 executable not working"
+                else
+                  echo "❌ PM2 executable not found at alias path"
+                fi
+              fi
             else
               echo "❌ Cloudways .bash_aliases file not found"
             fi
@@ -258,23 +271,27 @@ jobs:
             # Find PM2 executable
             PM2_PATH=""
             
-            # First try which after sourcing aliases
-            if command -v pm2 > /dev/null 2>&1; then
+            # Check if PM2 alias exists and extract the path
+            PM2_ALIAS=$(alias pm2 2>/dev/null | cut -d"'" -f2)
+            if [ -n "$PM2_ALIAS" ] && [ -f "$PM2_ALIAS" ]; then
+              PM2_PATH="$PM2_ALIAS"
+              echo "PM2 found via alias: $PM2_PATH"
+            elif command -v pm2 > /dev/null 2>&1; then
               PM2_PATH="pm2"
               echo "PM2 found via command: $PM2_PATH"
             else
-              # Try npm global bin
-              NPM_BIN=$(npm bin -g 2>/dev/null)
-              if [ -n "$NPM_BIN" ] && [ -f "$NPM_BIN/pm2" ]; then
-                PM2_PATH="$NPM_BIN/pm2"
+              # Try the exact Cloudways path from your SSH session
+              CLOUDWAYS_PM2="/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm/lib/node_modules/bin/pm2"
+              if [ -f "$CLOUDWAYS_PM2" ]; then
+                PM2_PATH="$CLOUDWAYS_PM2"
+                echo "PM2 found at Cloudways path: $PM2_PATH"
               else
-                # Check other common locations
-                for dir in $HOME/.npm-global/bin /usr/local/bin /usr/lib/node_modules/.bin $HOME/node_modules/.bin; do
-                  if [ -f "$dir/pm2" ]; then
-                    PM2_PATH="$dir/pm2"
-                    break
-                  fi
-                done
+                # Try npm global bin as fallback
+                NPM_BIN=$(npm bin -g 2>/dev/null)
+                if [ -n "$NPM_BIN" ] && [ -f "$NPM_BIN/pm2" ]; then
+                  PM2_PATH="$NPM_BIN/pm2"
+                  echo "PM2 found via npm global: $PM2_PATH"
+                fi
               fi
             fi
             
