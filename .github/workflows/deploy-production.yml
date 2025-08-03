@@ -99,25 +99,28 @@ jobs:
             echo "=== STARTING DEPLOYMENT ==="
             pwd
             
+            # We are already in public_html directory - work directly here
+            echo "Working in directory: $(pwd)"
+            
             # Check if this is first deployment (no git repo)
             if [ ! -d ".git" ]; then
-              echo "First deployment detected - cloning repository..."
+              echo "First deployment detected - cloning repository into current directory..."
               
               # List current directory contents for debugging
               echo "Current directory contents:"
               ls -la
               
-              # Remove all files and directories (including hidden ones)
+              # Remove all files and directories (including hidden ones) but stay in current directory
               find . -mindepth 1 -delete 2>/dev/null || true
               
               # Verify directory is empty
               echo "After cleanup:"
               ls -la
               
-              # Clone repository
+              # Clone repository directly into current directory (public_html)
               git clone https://github.com/Paktas/vendorica-api.git .
               
-              echo "Repository cloned successfully"
+              echo "Repository cloned successfully into public_html"
               echo "Repository contents:"
               ls -la
             else
