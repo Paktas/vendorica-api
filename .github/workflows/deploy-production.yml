@@ -111,47 +111,20 @@ jobs:
             echo -e "\nPM2 location check:"
             echo "Current PATH: $PATH"
             
-            # Check for Cloudways-specific aliases file
-            if [ -f "$HOME/.bash_aliases" ]; then
-              echo "✅ Found Cloudways .bash_aliases file"
-              source "$HOME/.bash_aliases"
-              echo "PATH after sourcing: $PATH"
-              PM2_ALIAS_FULL=$(alias pm2 2>/dev/null || echo 'not set')
-              echo "PM2 alias: $PM2_ALIAS_FULL"
-              
-              # Extract and test the PM2 path from alias
-              if [[ "$PM2_ALIAS_FULL" != "not set" ]]; then
-                PM2_ALIAS_PATH=$(echo "$PM2_ALIAS_FULL" | cut -d"'" -f2)
-                echo "PM2 alias path: $PM2_ALIAS_PATH"
-                if [ -f "$PM2_ALIAS_PATH" ]; then
-                  echo "✅ PM2 executable exists at alias path"
-                  "$PM2_ALIAS_PATH" --version 2>/dev/null || echo "❌ PM2 executable not working"
-                else
-                  echo "❌ PM2 executable not found at alias path"
-                fi
-              fi
+            # Check for PM2 global installation
+            echo -e "\nPM2 Installation Check:"
+            if command -v pm2 > /dev/null 2>&1; then
+              echo "✅ PM2 found in PATH: $(which pm2)"
+              echo "PM2 version: $(pm2 --version)"
             else
-              echo "❌ Cloudways .bash_aliases file not found"
+              echo "❌ PM2 not found in PATH"
+              echo "Please install PM2 globally: npm install -g pm2"
             fi
             
-            # Now check for PM2
-            which pm2 || echo "PM2 not in PATH"
-            
-            # Also check common PM2 locations directly
-            echo -e "\nSearching for PM2 in common locations:"
-            for dir in /usr/local/bin /usr/bin /bin $HOME/.npm-global/bin $HOME/node_modules/.bin /usr/lib/node_modules/.bin $HOME/.nvm/versions/node/*/bin; do
-              if [ -f "$dir/pm2" ]; then
-                echo "✅ Found PM2 at: $dir/pm2"
-                $dir/pm2 --version
-              fi
-            done
-            
-            # Check npm global bin location
-            NPM_BIN=$(npm bin -g 2>/dev/null)
-            if [ -n "$NPM_BIN" ] && [ -f "$NPM_BIN/pm2" ]; then
-              echo "✅ Found PM2 in npm global: $NPM_BIN/pm2"
-              $NPM_BIN/pm2 --version
-            fi
+            # Show npm global configuration
+            echo -e "\nnpm Global Configuration:"
+            echo "npm prefix: $(npm config get prefix)"
+            echo "npm global bin: $(npm bin -g 2>/dev/null || echo 'not available')"
 
       - name: 🧹 Clean Deployment Directory
         uses: appleboy/ssh-action@v1.2.2
@@ -272,36 +245,23 @@ jobs:
           script: |
             cd public_html
             
-            # Source Cloudways-specific aliases file  
-            if [ -f "$HOME/.bash_aliases" ]; then
-              echo "Sourcing Cloudways .bash_aliases..."
-              source "$HOME/.bash_aliases"
-            fi
-            
-            # Find PM2 executable
-            PM2_PATH=""
-            
-            # Check if PM2 alias exists and extract the path
-            PM2_ALIAS=$(alias pm2 2>/dev/null | cut -d"'" -f2)
-            if [ -n "$PM2_ALIAS" ] && [ -f "$PM2_ALIAS" ]; then
-              PM2_PATH="$PM2_ALIAS"
-              echo "PM2 found via alias: $PM2_PATH"
-            elif command -v pm2 > /dev/null 2>&1; then
+            # Check for PM2 global installation
+            if command -v pm2 > /dev/null 2>&1; then
+              echo "✅ PM2 found: $(which pm2)"
               PM2_PATH="pm2"
-              echo "PM2 found via command: $PM2_PATH"
             else
-              # Try the exact Cloudways path from your SSH session
-              CLOUDWAYS_PM2="/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm/lib/node_modules/bin/pm2"
-              if [ -f "$CLOUDWAYS_PM2" ]; then
-                PM2_PATH="$CLOUDWAYS_PM2"
-                echo "PM2 found at Cloudways path: $PM2_PATH"
+              echo "❌ PM2 not found in PATH"
+              echo "Installing PM2 globally..."
+              npm install -g pm2
+              
+              # Verify installation
+              if command -v pm2 > /dev/null 2>&1; then
+                echo "✅ PM2 installed successfully: $(which pm2)"
+                PM2_PATH="pm2"
               else
-                # Try npm global bin as fallback
-                NPM_BIN=$(npm bin -g 2>/dev/null)
-                if [ -n "$NPM_BIN" ] && [ -f "$NPM_BIN/pm2" ]; then
-                  PM2_PATH="$NPM_BIN/pm2"
-                  echo "PM2 found via npm global: $PM2_PATH"
-                fi
+                echo "❌ PM2 installation failed"
+                echo "Application built but cannot start with PM2"
+                exit 1
               fi
             fi
             
@@ -390,28 +350,14 @@ jobs:
             # Check PM2 logs for port information
             echo -e "\nPM2 Application Logs (last 10 lines):"
             
-            # Source Cloudways aliases for PM2 status check
-            [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
-            
-            # Find PM2 for status check
-            PM2_PATH=""
+            # Check PM2 status  
             if command -v pm2 > /dev/null 2>&1; then
-              PM2_PATH="pm2"
-            elif [ -f "$HOME/.npm-global/bin/pm2" ]; then
-              PM2_PATH="$HOME/.npm-global/bin/pm2"
-            elif [ -f "/usr/local/bin/pm2" ]; then
-              PM2_PATH="/usr/local/bin/pm2"
-            elif [ -f "$HOME/node_modules/.bin/pm2" ]; then
-              PM2_PATH="$HOME/node_modules/.bin/pm2"
-            fi
-            
-            if [ -n "$PM2_PATH" ]; then
-              echo "✅ PM2: Configured"
-              $PM2_PATH status
+              echo "✅ PM2: Available"
+              pm2 status
               
               # Show recent logs
               echo -e "\nRecent application logs:"
-              $PM2_PATH logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No logs available"
+              pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No logs available"
             else
               echo "⚠️ PM2: Not available"
             fi

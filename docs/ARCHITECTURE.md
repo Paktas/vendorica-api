@@ -235,30 +235,27 @@ The architecture supports various deployment platforms including managed hosting
 
 This design balances modern development experience with production reliability while maintaining simplicity and platform independence.
 
-## PM2 Setup for Cloudways
+## PM2 Setup (Industry Best Practice)
 
-**Important**: PM2 is not available by default on Cloudways servers and requires manual setup.
+### Global Installation
 
-### Installation Process
+PM2 should be installed globally using npm for consistent access across all environments:
 
-1. **Contact Cloudways Support**: Request PM2 installation on your server
-   - PM2 requires Node.js global package installation
-   - Cloudways support will install PM2 in the system
+```bash
+# Install PM2 globally
+npm install -g pm2
 
-2. **Configure User Environment**: After installation, PM2 needs to be accessible to your application user
-   - Cloudways creates a `.bash_aliases` file in your home directory
-   - This file contains the PM2 alias and PATH configuration
-   - Example content:
-   ```bash
-   export PATH='/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm'
-   export NODE_PATH=':/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm/lib/node_modules'
-   alias pm2='/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm/lib/node_modules/bin/pm2'
-   ```
+# Verify installation
+pm2 --version
+which pm2  # Should show /usr/local/bin/pm2 or similar
+```
 
-3. **GitHub Actions Integration**: The deployment workflow automatically:
-   - Sources the `.bash_aliases` file for PM2 access
-   - Detects PM2 via the alias path
-   - Falls back to direct script execution if PM2 config fails
+### Automatic Installation
+
+The deployment workflow automatically:
+- Checks if PM2 is globally available
+- Installs PM2 globally if not found
+- Uses standard `pm2` command from PATH
 
 ### Manual Verification
 
@@ -268,21 +265,22 @@ To verify PM2 is working correctly on your server:
 # SSH into your server
 ssh user@your-server.com
 
-# Source the aliases file
-source ~/.bash_aliases
-
-# Test PM2
+# Test PM2 (should work without any setup)
 pm2 --version
 
 # Check if your app is running
 pm2 status
+
+# View application logs
+pm2 logs vendorica-api
 ```
 
-### Troubleshooting
+### Benefits of Global Installation
 
-**PM2 Not Found**: Ensure `.bash_aliases` is sourced in your shell session
-**Permission Issues**: Contact Cloudways support to verify PM2 installation
-**Path Issues**: The deployment workflow handles PM2 path detection automatically
+- **Consistent access**: PM2 available in all shell sessions
+- **CI/CD friendly**: No special configuration needed for automated deployments
+- **Standard PATH**: Located at `/usr/local/bin/pm2` or npm global directory
+- **No aliases required**: Direct access via `pm2` command
 
 ## Recent Architectural Improvements
 
