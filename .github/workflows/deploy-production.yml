@@ -44,6 +44,7 @@ jobs:
             echo "❌ CLOUDWAYS_USER secret is not set!"
           else
             echo "✅ CLOUDWAYS_USER is set (${#USER_VALUE} chars)"
+            echo "Username ends with: ...${USER_VALUE: -8}"
           fi
           
           if [ -z "${{ secrets.CLOUDWAYS_SSH_KEY }}" ]; then
