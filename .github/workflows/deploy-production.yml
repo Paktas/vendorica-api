@@ -38,6 +38,7 @@ jobs:
             echo "❌ CLOUDWAYS_HOST secret is not set!"
           else
             echo "✅ CLOUDWAYS_HOST is set (${#HOST_VALUE} chars)"
+            echo "Host ends with: ...${HOST_VALUE: -8}"
           fi
           
           if [ -z "${{ secrets.CLOUDWAYS_USER }}" ]; then
@@ -71,6 +72,7 @@ jobs:
             echo "❌ CLOUDWAYS_PORT secret is not set!"
           else
             echo "✅ CLOUDWAYS_PORT is set (${#PORT_VALUE} chars)"
+            echo "Port value: ${PORT_VALUE}"
           fi
         env:
           CLOUDWAYS_SSH_KEY: ${{ secrets.CLOUDWAYS_SSH_KEY }}
@@ -78,66 +80,75 @@ jobs:
           USER_VALUE: ${{ secrets.CLOUDWAYS_USER }}
           PORT_VALUE: ${{ secrets.CLOUDWAYS_PORT }}
 
-      - name: Manual SSH Test
-        run: |
-          echo "=== MANUAL SSH CONNECTION TEST ==="
-          
-          # Create SSH key file
-          echo "${{ secrets.CLOUDWAYS_SSH_KEY }}" > /tmp/ssh_key
-          chmod 600 /tmp/ssh_key
-          
-          # Test SSH connection with verbose output
-          ssh -v -i /tmp/ssh_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 ${{ secrets.CLOUDWAYS_USER }}@${{ secrets.CLOUDWAYS_HOST }} "echo 'SSH connection successful'" || echo "SSH connection failed"
-          
-          # Clean up
-          rm -f /tmp/ssh_key
-
-      - name: Test SSH Connection with Debug
+      - name: Deploy to Cloudways
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
           username: ${{ secrets.CLOUDWAYS_USER }}
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
-          debug: true
           script: |
-            echo "=== CONNECTION DIAGNOSTIC ==="
-            echo "Current directory:"
+            echo "=== STARTING DEPLOYMENT ==="
             pwd
             
-            echo -e "\n=== USER INFORMATION ==="
-            whoami
-            id
+            # Check if this is first deployment (no git repo)
+            if [ ! -d ".git" ]; then
+              echo "First deployment detected - cloning repository..."
+              
+              # Backup any existing files
+              if [ "$(ls -A .)" ]; then
+                echo "Backing up existing files..."
+                mkdir -p ../backup-$(date +%Y%m%d-%H%M%S)
+                mv * ../backup-$(date +%Y%m%d-%H%M%S)/ 2>/dev/null || true
+              fi
+              
+              # Clone repository
+              git clone https://github.com/Paktas/vendorica-api.git .
+              
+              echo "Repository cloned successfully"
+            else
+              echo "Existing repository found - pulling latest changes..."
+              git fetch origin
+              git reset --hard origin/main
+            fi
             
-            echo -e "\n=== SYSTEM INFORMATION ==="
-            uname -a
+            echo "=== INSTALLING DEPENDENCIES ==="
+            npm ci --only=production
             
-            echo -e "\n=== DIRECTORY CONTENTS ==="
-            ls -la
+            echo "=== BUILDING APPLICATION ==="
+            npm run build
             
-            echo -e "\n=== NODE.JS & NPM VERSIONS ==="
-            which node
-            node --version || echo "Node.js not found"
-            which npm
-            npm --version || echo "npm not found"
+            echo "=== MANAGING PM2 PROCESS ==="
+            # Check if PM2 process exists
+            if pm2 describe vendorica-api > /dev/null 2>&1; then
+              echo "Reloading existing PM2 process..."
+              pm2 reload vendorica-api --update-env
+            else
+              echo "Starting new PM2 process..."
+              pm2 start ecosystem.config.js
+            fi
             
-            echo -e "\n=== GIT INFORMATION ==="
-            which git
-            git --version || echo "git not found"
+            # Save PM2 configuration
+            pm2 save
             
-            echo -e "\n=== PM2 INFORMATION ==="
-            which pm2
-            pm2 --version || echo "PM2 not found"
-            pm2 status || echo "PM2 not running or no processes"
+            echo "=== DEPLOYMENT COMPLETED ==="
+            pm2 status
             
-            echo -e "\n=== DISK SPACE ==="
-            df -h .
+      - name: Verify deployment
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            echo "=== DEPLOYMENT VERIFICATION ==="
+            pm2 status
+            echo "PM2 processes status shown above"
             
-            echo -e "\n=== MEMORY ==="
-            free -h || echo "free command not available"
+            # Wait a moment for the application to start
+            sleep 5
             
-            echo -e "\n=== NETWORK CONNECTIVITY ==="
-            ping -c 2 google.com || echo "No internet connectivity"
-            
-      - name: Connection Test Complete
-        run: echo "Basic connection diagnostic completed. Check logs above for server information."
+            # Test if the application is responding (if health endpoint exists)
+            echo "Testing application health..."
+            curl -f http://localhost:3000/health 2>/dev/null && echo "✅ Health check passed" || echo "⚠️ Health check failed (endpoint may not exist yet)"
