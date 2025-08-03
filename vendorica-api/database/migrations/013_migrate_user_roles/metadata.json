@@ -1,0 +1,20 @@
+{
+  "version": "013", 
+  "name": "migrate_user_roles",
+  "description": "Add role_id foreign key to users table and migrate existing role data from string to UUID references",
+  "type": "modify",
+  "author": "Development Team",
+  "created_at": "2025-07-27T00:00:00Z", 
+  "dependencies": ["012"],
+  "affects_tables": ["users"],
+  "breaking_changes": false,
+  "requires_downtime": false,
+  "estimated_duration": "1-2 minutes",
+  "notes": [
+    "Adds role_id column to users table",
+    "Migrates existing role string data to foreign key references",
+    "Maintains backwards compatibility - old role column preserved",
+    "Includes comprehensive data verification",
+    "Safe rollback available if needed"
+  ]
+}
