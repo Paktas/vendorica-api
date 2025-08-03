@@ -111,10 +111,15 @@ jobs:
             echo -e "\nPM2 location check:"
             echo "Current PATH: $PATH"
             
-            # Source profile to get full PATH
-            [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-            [ -f "$HOME/.profile" ] && source "$HOME/.profile"
-            echo "PATH after sourcing profiles: $PATH"
+            # Check for Cloudways-specific aliases file
+            if [ -f "$HOME/.bash_aliases" ]; then
+              echo "✅ Found Cloudways .bash_aliases file"
+              source "$HOME/.bash_aliases"
+              echo "PATH after sourcing: $PATH"
+              echo "PM2 alias: $(alias pm2 2>/dev/null || echo 'not set')"
+            else
+              echo "❌ Cloudways .bash_aliases file not found"
+            fi
             
             # Now check for PM2
             which pm2 || echo "PM2 not in PATH"
@@ -244,16 +249,19 @@ jobs:
           script: |
             cd public_html
             
-            # Source profile to get full PATH
-            [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
-            [ -f "$HOME/.profile" ] && source "$HOME/.profile"
+            # Source Cloudways-specific aliases file  
+            if [ -f "$HOME/.bash_aliases" ]; then
+              echo "Sourcing Cloudways .bash_aliases..."
+              source "$HOME/.bash_aliases"
+            fi
             
             # Find PM2 executable
             PM2_PATH=""
             
-            # First try which after sourcing profile
+            # First try which after sourcing aliases
             if command -v pm2 > /dev/null 2>&1; then
               PM2_PATH="pm2"
+              echo "PM2 found via command: $PM2_PATH"
             else
               # Try npm global bin
               NPM_BIN=$(npm bin -g 2>/dev/null)
@@ -302,6 +310,9 @@ jobs:
             echo "✅ Repository: Cloned"
             echo "✅ Dependencies: Installed" 
             echo "✅ Build: Completed"
+            
+            # Source Cloudways aliases for PM2 status check
+            [ -f "$HOME/.bash_aliases" ] && source "$HOME/.bash_aliases"
             
             # Find PM2 for status check
             PM2_PATH=""
