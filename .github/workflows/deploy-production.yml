@@ -171,18 +171,18 @@ jobs:
               rm -rf .git
             fi
             
-            # Backup environment files before cleaning
-            echo "Backing up environment files..."
-            [ -f ".env.production" ] && cp .env.production /tmp/.env.production.backup && echo "Backed up .env.production"
-            [ -f ".env.local" ] && cp .env.local /tmp/.env.local.backup && echo "Backed up .env.local"
+            # Move environment files to home directory before cleaning
+            echo "Moving environment files to home directory..."
+            [ -f ".env.production" ] && mv .env.production ~/.env.production.deploy && echo "Moved .env.production to ~/"
+            [ -f ".env.local" ] && mv .env.local ~/.env.local.deploy && echo "Moved .env.local to ~/"
             
             echo "Cleaning directory completely..."
             rm -rf * .[^.]* 2>/dev/null || true
             
-            # Restore environment files
-            echo "Restoring environment files..."
-            [ -f "/tmp/.env.production.backup" ] && mv /tmp/.env.production.backup .env.production && echo "✅ Restored .env.production"
-            [ -f "/tmp/.env.local.backup" ] && mv /tmp/.env.local.backup .env.local && echo "✅ Restored .env.local"
+            # Move environment files back after cleanup
+            echo "Moving environment files back..."
+            [ -f "~/.env.production.deploy" ] && mv ~/.env.production.deploy .env.production && echo "✅ Restored .env.production"
+            [ -f "~/.env.local.deploy" ] && mv ~/.env.local.deploy .env.local && echo "✅ Restored .env.local"
             
             echo "Directory after cleanup:"
             ls -la
