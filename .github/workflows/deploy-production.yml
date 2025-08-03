@@ -154,4 +154,45 @@ jobs:
             ls -la
             
             echo -e "\n=== FILE OPERATIONS TEST COMPLETE ==="
+            
+            echo -e "\n=== TESTING GIT CLONE OPERATION ==="
+            
+            # Check if git repository already exists
+            if [ -d ".git" ]; then
+              echo "Git repository already exists, removing for clean test..."
+              rm -rf .git
+            fi
+            
+            # Remove any existing project files for clean test
+            echo "Cleaning directory for git clone test..."
+            find . -mindepth 1 -name "*.js" -o -name "*.json" -o -name "*.md" -o -name "src" -o -name "dist" | head -10
+            find . -mindepth 1 -name "*.js" -o -name "*.json" -o -name "*.md" -o -name "src" -o -name "dist" -exec rm -rf {} +
+            
+            echo "Directory before clone:"
+            ls -la
+            
+            # Test git clone
+            echo -e "\nCloning repository..."
+            git clone https://github.com/Paktas/vendorica-api.git .
+            
+            # Verify clone was successful
+            if [ -d ".git" ]; then
+              echo "✅ Git clone successful"
+              
+              echo -e "\nRepository files:"
+              ls -la
+              
+              echo -e "\nChecking key files:"
+              [ -f "package.json" ] && echo "✅ package.json found" || echo "❌ package.json missing"
+              [ -d "src" ] && echo "✅ src directory found" || echo "❌ src directory missing"
+              [ -f "README.md" ] && echo "✅ README.md found" || echo "❌ README.md missing"
+              
+              echo -e "\nGit status:"
+              git status --porcelain || echo "Git status check failed"
+              
+            else
+              echo "❌ Git clone failed"
+            fi
+            
+            echo -e "\n=== GIT CLONE TEST COMPLETE ==="
             echo -e "\n=== ENVIRONMENT CHECK COMPLETE ==="
