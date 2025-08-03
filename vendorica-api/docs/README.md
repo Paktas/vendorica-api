@@ -28,9 +28,21 @@ npm start
 
 ## Environment Configuration
 
-Copy and configure environment files:
-- `.env.development` for local development
-- `.env.production` for production deployment
+**Security**: All environment files are ignored by git except `.env.example`
+
+**Setup**:
+```bash
+# Copy environment templates
+cp .env.example .env.development
+cp .env.example .env.production
+
+# Configure your actual values in the copied files
+```
+
+**Files**:
+- `.env.example` - Template with required variables (tracked in git)
+- `.env.development` - Development configuration (ignored by git)  
+- `.env.production` - Production configuration (ignored by git)
 
 ## API Documentation
 

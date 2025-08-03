@@ -38,6 +38,20 @@ import { UserController } from '@controllers/user.js'
 import { AuthService } from '@services/auth.js'
 ```
 
+### 6. API Documentation Strategy
+- **Technology**: Scalar API Reference (OpenAPI 3.0)
+- **Dynamic Server URLs**: Automatically detects current server (no hardcoded values)
+- **Universal**: Works with any documentation tool (Scalar, SwaggerUI, etc.)
+- **Environment Agnostic**: Same configuration works in dev/staging/prod
+- **Security**: JWT Bearer token authentication integrated
+
+### 7. API Architecture Design
+- **Internal API** (`/internal/*`): Backend for Vendorica application
+- **Public API** (`/v1/*`): Future public-facing API for external developers
+- **Health Endpoints**: Simple monitoring and status checks
+- **Documentation Routes**: Interactive API documentation at `/docs`
+- **Separation of Concerns**: Clear distinction between internal and public APIs
+
 ## Directory Structure
 
 ```
@@ -57,17 +71,30 @@ vendorica-api/
 │   └── index.ts            # Application entry point
 ├── dist/                   # Compiled JavaScript (production)
 ├── logs/                   # PM2 log files
-├── .env.development        # Development environment
-├── .env.production         # Production environment
+├── .env.development        # Development environment (IGNORED by git)
+├── .env.production         # Production environment (IGNORED by git)
+├── .env.example            # Environment template (tracked)
 ├── ecosystem.config.js     # PM2 configuration
 ├── package.json            # Dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
-└── vite.config.ts          # Vite configuration
+├── vite.config.ts          # Vite configuration
+└── .github/
+    └── workflows/
+        └── deploy-production.yml # CI/CD pipeline
 ```
 
 ## Environment Configuration
 
-### Development (.env.development)
+### Environment Files (.env.*)
+
+**Security**: All `.env.*` files are ignored by git except `.env.example`
+
+**Setup Process**:
+1. Copy `.env.example` to `.env.development` and `.env.production`
+2. Fill in actual values for your environment
+3. Never commit actual environment files
+
+**Development (.env.development)**:
 ```env
 NODE_ENV=development
 PORT=3010
@@ -76,9 +103,10 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_anon_key
 API_BASE_URL=http://localhost:3010
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+JWT_SECRET=your-development-jwt-secret
 ```
 
-### Production (.env.production)
+**Production (.env.production)**:
 ```env
 NODE_ENV=production
 # NO PORT - Web server handles routing
@@ -87,6 +115,7 @@ SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_production_anon_key
 API_BASE_URL=https://api.vendorica.com
 CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
+JWT_SECRET=your-production-jwt-secret
 ```
 
 ## Development Workflow
@@ -119,6 +148,12 @@ CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
 - **Process Manager**: PM2 (cluster mode, 2 instances)
 - **Web Server**: Apache (reverse proxy)
 - **Monitoring**: PM2 built-in monitoring
+
+### Documentation Tools
+- **API Reference**: Scalar (OpenAPI 3.0 compliant)
+- **Interactive Testing**: Built-in API testing interface
+- **Auto-generation**: Spec generated from JSDoc comments
+- **Dynamic URLs**: Server detection without hardcoded values
 
 ## Pros and Cons
 
@@ -185,13 +220,44 @@ TypeScript path aliases are resolved during build time by Vite, ensuring clean i
 - Development: Single process with HMR
 - Production: PM2 cluster mode with 2 instances for load distribution
 
-## Platform Agnostic Deployment
+### Security Architecture
+- **JWT Authentication**: Secure token-based authentication (replaced insecure base64)
+- **Token Management**: 7-day expiration with refresh capabilities
+- **Standardized Errors**: Consistent error responses with request tracking
+- **Environment Security**: All environment files ignored by git (only .env.example tracked)
+- **Request Tracking**: Request IDs for debugging and audit trails
 
-The architecture supports simple deployment on any platform:
+## Deployment
 
-1. **2-Command Deployment**: `npm run build` + `npm start`
-2. **Environment-Based Configuration**: All settings from .env files
-3. **Standard Node.js**: No platform-specific dependencies
-4. **Flexible Web Server**: Works with Apache, Nginx, or any reverse proxy
+For detailed deployment instructions, see [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md).
+
+The architecture supports various deployment platforms including managed hosting (Cloudways), cloud platforms (AWS, GCP), containers (Docker), and serverless environments.
 
 This design balances modern development experience with production reliability while maintaining simplicity and platform independence.
+
+## Recent Architectural Improvements
+
+### Security Enhancements
+- **JWT Authentication System**: Replaced insecure base64 tokens with proper JWT implementation
+- **Environment Security**: All `.env.*` files excluded from git (only `.env.example` tracked)
+- **Standardized Error Handling**: Consistent error responses with request tracking and timestamps
+- **Request ID Middleware**: Unique request identifiers for debugging and audit trails
+
+### Documentation Architecture
+- **Dynamic Server Detection**: API documentation automatically adapts to current environment
+- **Universal Tool Support**: Configuration works with any OpenAPI-compatible tool
+- **Zero Hardcoded Values**: No maintenance needed for different environments or ports
+- **Interactive Testing**: Built-in API testing directly from documentation interface
+
+### API Design Patterns
+- **Clear Route Separation**: `/internal/*` for app backend, `/v1/*` for future public API
+- **Consistent Response Format**: Standardized success/error response structures
+- **Comprehensive OpenAPI Spec**: Fully documented endpoints with examples and schemas
+- **Production-Ready**: Battle-tested patterns for scalability and maintainability
+
+### Deployment Architecture
+- **Cloudways Integration**: Optimized for managed hosting with automatic configuration
+- **GitHub Actions CI/CD**: Automated deployments with testing and verification
+- **Zero-Configuration Apache**: Web server automatically configured by Cloudways
+- **PM2 Clustering**: Process management with load balancing (requires installation)
+- **SSL/Security**: Automatic certificate management and security headers

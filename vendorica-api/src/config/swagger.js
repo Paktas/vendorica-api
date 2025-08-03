@@ -30,9 +30,14 @@ export const swaggerDefinition = {
       \`\`\`
       
       ## Base URL
-      - Internal API: \`http://localhost:3010/internal\`
-      - Public API (future): \`http://localhost:3010/v1\`
-      - Production: \`https://api.vendorica.com/internal\`
+      The server URL is automatically determined from your current location.
+      All endpoint paths include the appropriate prefixes:
+      - Internal API: \`/internal/*\` (for the Vendorica application)
+      - Public API: \`/v1/*\` (coming soon - for external developers)
+      
+      ## Server Configuration
+      The documentation interface automatically detects and uses the current server.
+      No manual configuration required.
     `,
     contact: {
       name: 'Vendorica Development Team',
@@ -45,16 +50,8 @@ export const swaggerDefinition = {
   },
   servers: [
     {
-      url: '/internal',
-      description: 'Current server - Internal API'
-    },
-    {
-      url: 'http://localhost:3010/internal',
-      description: 'Development server - Internal API'
-    },
-    {
-      url: 'https://app.vendorica.com/internal',
-      description: 'Production server - Internal API'
+      url: '/',
+      description: 'Current server (dynamically determined)'
     }
   ],
   components: {
