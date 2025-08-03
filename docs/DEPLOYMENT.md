@@ -39,7 +39,15 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
    - Point domain DNS to Cloudways server IP
    - Enable SSL certificate (Let's Encrypt - automatic)
 
-3. **SSH Access Setup**
+3. **⚠️ IMPORTANT: Configure Webroot Path**
+   - In Cloudways: Navigate to your Application → Application Settings
+   - Find "Webroot" field (currently shows `/public_html`)
+   - Change Webroot to: `/public_html/dist`
+   - Save settings
+   
+   **Why**: This points Apache to serve from the compiled JavaScript files instead of source code.
+
+4. **SSH Access Setup**
    
    **Cloudways Application Access**:
    1. In Cloudways: Navigate to your Application → Application Access
@@ -217,6 +225,8 @@ module.exports = {
 
 **After completing the above setup, perform your first deployment:**
 
+**⚠️ Note**: Configure the webroot setting (step 3) AFTER your first successful deployment and build. This ensures the `dist/` directory exists before Apache tries to serve from it.
+
 1. **Use GitHub Actions** (recommended):
    - Push code to `main` branch
    - GitHub Actions will automatically deploy
@@ -258,17 +268,21 @@ module.exports = {
 **Deployment Structure**:
 ```
 /home/{account_id}.cloudwaysapps.com/{app_id}/public_html/
-├── src/                     # Source code
-├── dist/                    # Compiled JavaScript (Node.js runs from here)
+├── src/                     # Source code (not served by Apache)
+├── dist/                    # Compiled JavaScript ← Apache webroot points here
+│   ├── index.js            # Node.js entry point
+│   └── ...                 # Compiled application files
 ├── package.json             # Dependencies
 ├── ecosystem.config.js      # PM2 configuration
 ├── .env.production          # Environment variables
 └── ...                      # Other project files
 ```
 
-- **Apache serves**: Static files from public_html (if any)
+**After configuring webroot to `/public_html/dist`:**
+- **Apache serves**: Files from `dist/` directory (compiled application)
 - **PM2 runs**: Node.js application from `dist/index.js`
 - **API endpoints**: Handled by Node.js, proxied through Apache
+- **Source code**: Remains in `public_html/src/` but not served by Apache
 
 ### 7. GitHub Actions CI/CD Setup
 
@@ -445,6 +459,11 @@ See previous version of this file or contact support for manual VPS setup detail
 - Cloudways auto-renews Let's Encrypt certificates
 - Check SSL status in Cloudways dashboard
 - Verify domain DNS pointing to correct IP
+
+**404 Errors or "File not found"**:
+- Verify webroot is set to `/public_html/dist` in Application Settings
+- Ensure `npm run build` completed successfully and `dist/` directory exists
+- Check that `dist/index.js` file is present
 
 ### Performance Optimization
 
