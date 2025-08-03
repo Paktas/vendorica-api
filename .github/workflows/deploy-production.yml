@@ -27,11 +27,6 @@ jobs:
       - name: Debug GitHub Secrets
         run: |
           echo "=== GITHUB SECRETS DEBUG ==="
-          echo "Host: ${{ secrets.CLOUDWAYS_HOST }}"
-          echo "Username: ${{ secrets.CLOUDWAYS_USER }}"
-          echo "Port: ${{ secrets.CLOUDWAYS_PORT }}"
-          echo "SSH Key length: ${#CLOUDWAYS_SSH_KEY}"
-          echo "SSH Key starts with: ${CLOUDWAYS_SSH_KEY:0:50}..."
           
           # Check for each secret
           if [ -z "${{ secrets.CLOUDWAYS_HOST }}" ]; then
@@ -72,13 +67,26 @@ jobs:
             echo "❌ CLOUDWAYS_PORT secret is not set!"
           else
             echo "✅ CLOUDWAYS_PORT is set (${#PORT_VALUE} chars)"
-            echo "Port value: ${PORT_VALUE}"
           fi
         env:
           CLOUDWAYS_SSH_KEY: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           HOST_VALUE: ${{ secrets.CLOUDWAYS_HOST }}
           USER_VALUE: ${{ secrets.CLOUDWAYS_USER }}
           PORT_VALUE: ${{ secrets.CLOUDWAYS_PORT }}
+
+      - name: Test SSH Connection
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            echo "=== SSH CONNECTION TEST ==="
+            echo "✅ SSH connection successful!"
+            echo "Current directory: $(pwd)"
+            echo "User: $(whoami)"
+            echo "Server: $(hostname)"
 
       - name: Deploy to Cloudways
         uses: appleboy/ssh-action@v0.1.5
