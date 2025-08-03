@@ -105,13 +105,12 @@ node --version    # Should be 18.x or higher
 npm --version     # Should be 9.x or higher
 which git         # Verify git is installed
 
-# Check your application directories
-pwd              # Should show: /home/{account_id}.cloudwaysapps.com/{app_id}
-ls -la           # View directory structure
+# Check current directory (SSH logs directly into webroot)
+pwd              # Should show: /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+ls -la           # View webroot contents
 
-# Navigate to webroot (where your app will be deployed)
-cd public_html
-pwd              # Confirm: /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+# Note: Cloudways SSH logs you directly into public_html (the webroot)
+# This is where we'll deploy the vendorica-api repository
 
 # Verify webroot is ready for deployment
 ls -la           # Should be empty or contain default files
@@ -224,11 +223,13 @@ module.exports = {
 
 2. **Or manual deployment**:
    ```bash
-   # SSH to server
+   # SSH to server (logs directly into public_html)
    ssh {app_id}@your-server-ip
-   cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
    
-   # Clone repository (first time only)
+   # Verify you're in the webroot
+   pwd    # Should show: /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+   
+   # Clone repository directly into webroot (first time only)
    git clone https://github.com/Paktas/vendorica-api.git .
    
    # Install dependencies and build
@@ -253,6 +254,21 @@ module.exports = {
 - ✅ **Security headers** configured
 
 **No manual Apache configuration needed** - Cloudways handles all web server setup.
+
+**Deployment Structure**:
+```
+/home/{account_id}.cloudwaysapps.com/{app_id}/public_html/
+├── src/                     # Source code
+├── dist/                    # Compiled JavaScript (Node.js runs from here)
+├── package.json             # Dependencies
+├── ecosystem.config.js      # PM2 configuration
+├── .env.production          # Environment variables
+└── ...                      # Other project files
+```
+
+- **Apache serves**: Static files from public_html (if any)
+- **PM2 runs**: Node.js application from `dist/index.js`
+- **API endpoints**: Handled by Node.js, proxied through Apache
 
 ### 7. GitHub Actions CI/CD Setup
 
@@ -329,7 +345,8 @@ jobs:
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
           script: |
-            cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
+            # SSH logs directly into public_html, so we're already in the right place
+            pwd  # Verify: /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
             git pull origin main
             npm ci --only=production
             npm run build
