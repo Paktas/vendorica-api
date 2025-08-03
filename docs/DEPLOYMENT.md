@@ -57,15 +57,32 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
    - App ID: `jwnbrgtuur`
    - WebRoot: `/home/1462634.cloudwaysapps.com/jwnbrgtuur/public_html`
    
-   **Generate SSH Key Pair**:
+   **Generate SSH Key Pair** (run locally on your development machine):
    ```bash
-   ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api"
-   # Save as: vendorica-api-deploy (or similar name)
-   # Don't use passphrase for automated deployments
+   # Generate SSH key pair with specific filename (use underscores)
+   ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api" -f ~/.ssh/vendorica_api_deploy_key
+   
+   # When prompted:
+   # - Enter file in which to save the key: ~/.ssh/vendorica_api_deploy_key
+   # - Enter passphrase (empty for no passphrase): [PRESS ENTER - no passphrase for CI/CD]
+   # - Enter same passphrase again: [PRESS ENTER]
+   
+   # This creates two files:
+   # - ~/.ssh/vendorica_api_deploy_key (private key - NEVER share this)
+   # - ~/.ssh/vendorica_api_deploy_key.pub (public key - safe to share)
+   ```
+   
+   **⚠️ Security Important**: Add private key to `.gitignore`:
+   ```bash
+   # Add to your project's .gitignore file
+   echo "*.pem" >> .gitignore
+   echo "*_key" >> .gitignore  
+   echo "vendorica_api_deploy_key" >> .gitignore
+   echo "vendorica_api_deploy_key.pub" >> .gitignore
    ```
    
    **Add Public Key to Cloudways**:
-   1. Copy public key: `cat vendorica-api-deploy.pub`
+   1. Copy public key: `cat ~/.ssh/vendorica_api_deploy_key.pub`
    2. In Cloudways: Application Access → Add SSH Key
    3. Paste the public key content
    4. Save changes
@@ -219,15 +236,15 @@ pm2 startup
 
 **Step 1: Generate SSH Key Pair** (if not already done)
 ```bash
-ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api"
-# Save as: vendorica-api-deploy (or similar name)
+# Generate SSH key pair with specific filename (use underscores)
+ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api" -f ~/.ssh/vendorica_api_deploy_key
 # Don't use passphrase for automated deployments
 ```
 
-**Step 2: Add Public Key to Application User**
-1. Copy public key: `cat vendorica-api-deploy.pub`
-2. In Cloudways: Application → Application Access → Edit `vendorica_api_deploy` user
-3. Add the SSH public key to this user
+**Step 2: Add Public Key to Cloudways**
+1. Copy public key: `cat ~/.ssh/vendorica_api_deploy_key.pub`
+2. In Cloudways: Application Access → Add SSH Key
+3. Add the SSH public key content
 4. Save changes
 
 **Step 3: Create GitHub Secrets**

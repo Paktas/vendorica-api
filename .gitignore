@@ -143,11 +143,17 @@ temp/
 *.sqlite3
 *.db
 
-# SSL certificates (if stored locally)
+# SSL certificates and SSH keys (if stored locally)
 *.pem
 *.key
 *.crt
 *.csr
+
+# SSH deployment keys
+vendorica_api_deploy_key
+vendorica_api_deploy_key.pub
+*_deploy_key
+*_deploy_key.pub
 
 # Backup files
 *.bak
