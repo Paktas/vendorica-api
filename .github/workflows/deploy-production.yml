@@ -95,49 +95,30 @@ jobs:
           username: ${{ secrets.CLOUDWAYS_USER }}
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
+          script_stop: true
           script: |
             echo "=== SERVER ENVIRONMENT CHECK ==="
             echo "Initial directory: $(pwd)"
             echo "Current user: $(whoami)"
-            echo "Server hostname: $(hostname)"
             
             echo -e "\n=== NAVIGATING TO PUBLIC_HTML ==="
             cd public_html
             echo "Now in directory: $(pwd)"
             
-            echo -e "\n=== DIRECTORY CONTENTS ==="
+            echo -e "\n=== PUBLIC_HTML DIRECTORY CONTENTS ==="
             ls -la
             
             echo -e "\n=== AVAILABLE PACKAGES ==="
             echo "Node.js:"
             which node && node --version || echo "Node.js not found"
             
-            echo -e "npm:"
+            echo "npm:"
             which npm && npm --version || echo "npm not found"
             
-            echo -e "Git:"
+            echo "Git:"
             which git && git --version || echo "Git not found"
             
-            echo -e "PM2:"
+            echo "PM2:"
             which pm2 && pm2 --version || echo "PM2 not found"
-            
-            echo -e "Python:"
-            which python3 && python3 --version || echo "Python not found"
-            
-            echo -e "PHP:"
-            which php && php --version || echo "PHP not found"
-            
-            echo -e "\n=== SYSTEM INFO ==="
-            echo "OS: $(uname -a)"
-            echo "Disk space:"
-            df -h .
-            echo "Memory:"
-            free -h || echo "free command not available"
-            
-            echo -e "\n=== PERMISSIONS ==="
-            echo "Directory permissions:"
-            ls -ld .
-            echo "User permissions:"
-            id
             
             echo -e "\n=== ENVIRONMENT CHECK COMPLETE ==="
