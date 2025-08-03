@@ -227,29 +227,11 @@ TypeScript path aliases are resolved during build time by Vite, ensuring clean i
 - **Environment Security**: All environment files ignored by git (only .env.example tracked)
 - **Request Tracking**: Request IDs for debugging and audit trails
 
-## Production Deployment
+## Deployment
 
-### Recommended: Cloudways Managed Hosting
+For detailed deployment instructions, see [`docs/DEPLOYMENT.md`](./DEPLOYMENT.md).
 
-**Architecture**: `GitHub → GitHub Actions → Cloudways VPS → Apache → PM2 → Node.js`
-
-**Benefits**:
-- ✅ **Managed Infrastructure**: Cloudways handles server maintenance
-- ✅ **Automated Deployments**: GitHub Actions CI/CD pipeline  
-- ✅ **Apache Auto-Configuration**: No manual web server setup needed
-- ✅ **PM2 Support**: Can be installed by Cloudways support team
-- ✅ **SSL Certificates**: Let's Encrypt automatic renewal
-- ✅ **Easy Scaling**: Vertical scaling via dashboard
-- ✅ **Built-in Monitoring**: Server metrics and performance tracking
-
-### Alternative Deployment Options
-
-The architecture also supports deployment on:
-
-1. **Manual VPS**: Self-managed servers (DigitalOcean, Linode, etc.)
-2. **Cloud Platforms**: AWS EC2, Google Compute Engine, Azure VMs
-3. **Container Platforms**: Docker + Kubernetes, Railway, DigitalOcean App Platform
-4. **Serverless**: Vercel, Netlify Functions (with modifications)
+The architecture supports various deployment platforms including managed hosting (Cloudways), cloud platforms (AWS, GCP), containers (Docker), and serverless environments.
 
 This design balances modern development experience with production reliability while maintaining simplicity and platform independence.
 
