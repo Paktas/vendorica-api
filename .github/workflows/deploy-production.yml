@@ -215,28 +215,14 @@ jobs:
               echo "System PM2 version: $(sudo pm2 --version 2>/dev/null || echo 'version check failed')"
             fi
             
-            # Check current user PM2
+            # Check current user PM2 (but prefer system PM2)
             if command -v pm2 > /dev/null 2>&1; then
-              echo "✅ User PM2 found: $(which pm2)"
+              echo "ℹ️ User PM2 found: $(which pm2)"
               echo "User PM2 version: $(pm2 --version)"
+              echo "Note: System PM2 will be preferred if available"
             else
-              echo "❌ No PM2 available for current user"
-              
-              # Try installing for current user
-              echo "Attempting to install PM2 for current user..."
-              npm install -g pm2
-              
-              # Refresh PATH
-              export PATH="$(npm config get prefix)/bin:$PATH"
-              hash -r
-              
-              if command -v pm2 > /dev/null 2>&1; then
-                echo "✅ PM2 installed for user: $(which pm2)"
-                echo "PM2 version: $(pm2 --version)"
-              else
-                echo "❌ PM2 installation failed for current user"
-                echo "Will attempt to use system PM2 or skip PM2 for this deployment"
-              fi
+              echo "ℹ️ No user PM2 found"
+              echo "This is fine - system PM2 is preferred for production"
             fi
             
             echo "Installing production dependencies..."
@@ -289,14 +275,16 @@ jobs:
             # PM2 process management with fallback options
             echo "Starting PM2 process management..."
             
-            # Determine which PM2 to use
+            # Determine which PM2 to use (prefer system-level)
             PM2_CMD=""
-            if command -v pm2 > /dev/null 2>&1; then
-              PM2_CMD="pm2"
-              echo "Using user PM2: $(which pm2)"
-            elif sudo which pm2 > /dev/null 2>&1; then
+            if sudo which pm2 > /dev/null 2>&1; then
               PM2_CMD="sudo pm2"
-              echo "Using system PM2: $(sudo which pm2)"
+              echo "✅ Using system PM2: $(sudo which pm2)"
+              echo "This is optimal for production multi-tenant environment"
+            elif command -v pm2 > /dev/null 2>&1; then
+              PM2_CMD="pm2"
+              echo "⚠️ Using user PM2: $(which pm2)"
+              echo "Note: System-level PM2 would be better for production"
             else
               echo "❌ No PM2 available - will run application directly"
               # Start app directly without PM2
@@ -387,17 +375,17 @@ jobs:
             # Check PM2 logs for port information
             echo -e "\nPM2 Application Logs (last 10 lines):"
             
-            # Check PM2 status with fallback
-            if command -v pm2 > /dev/null 2>&1; then
+            # Check PM2 status (prefer system PM2)
+            if sudo which pm2 > /dev/null 2>&1; then
+              echo "✅ PM2: Available (system - optimal for production)"
+              sudo pm2 status
+              echo -e "\nRecent application logs:"
+              sudo pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
+            elif command -v pm2 > /dev/null 2>&1; then
               echo "✅ PM2: Available (user)"
               pm2 status
               echo -e "\nRecent application logs:"
               pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
-            elif sudo which pm2 > /dev/null 2>&1; then
-              echo "✅ PM2: Available (system)"
-              sudo pm2 status
-              echo -e "\nRecent application logs:"
-              sudo pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
             else
               echo "⚠️ PM2: Not available - checking direct process"
               if [ -f ~/vendorica-api.pid ]; then

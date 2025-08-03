@@ -237,25 +237,35 @@ This design balances modern development experience with production reliability w
 
 ## PM2 Setup (Industry Best Practice)
 
-### Global Installation
+### System-Level Installation (Recommended for Production)
 
-PM2 should be installed globally using npm for consistent access across all environments:
+For production environments with multiple applications, PM2 should be installed at the system level:
 
 ```bash
-# Install PM2 globally
-npm install -g pm2
+# System-level installation (requires admin access)
+sudo npm install -g pm2
 
-# Verify installation
-pm2 --version
-which pm2  # Should show /usr/local/bin/pm2 or similar
+# Verify system installation
+sudo which pm2  # Should show /usr/local/bin/pm2 or similar
+sudo pm2 --version
 ```
 
-### Automatic Installation
+### Deployment Workflow
 
 The deployment workflow automatically:
-- Checks if PM2 is globally available
-- Installs PM2 globally if not found
-- Uses standard `pm2` command from PATH
+- Prefers system-level PM2 (`sudo pm2`) for production stability
+- Falls back to user PM2 if system PM2 not available
+- Uses direct Node.js execution as final fallback
+- Provides comprehensive diagnostics for troubleshooting
+
+### Why System-Level PM2?
+
+**Advantages for Production:**
+- **Multi-tenant safe**: Each application user manages their own processes
+- **Consistent permissions**: All users access PM2 the same way
+- **Server stability**: System installation is more persistent
+- **Admin control**: Centralized PM2 management
+- **Resource isolation**: Better process separation between applications
 
 ### Manual Verification
 
