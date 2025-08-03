@@ -12,8 +12,9 @@ npm install
 # Start development server with HMR
 npm run dev
 
-# API will be available at http://localhost:3002
-# API docs available at http://localhost:3002/api/docs
+# API will be available at http://localhost:3010 (development only)
+# API docs available at http://localhost:3010/docs
+# Production: Custom domain with standard Apache ports (80/443)
 ```
 
 ### Production
@@ -33,7 +34,7 @@ Copy and configure environment files:
 
 ## API Documentation
 
-- **Live Docs**: Visit `/api/docs` when server is running
+- **Live Docs**: Visit `/docs` when server is running
 - **Architecture**: See `docs/ARCHITECTURE.md`
 - **API Reference**: See `docs/API.md`
 - **Deployment**: See `docs/DEPLOYMENT.md`

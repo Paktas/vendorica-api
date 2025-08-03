@@ -7,7 +7,7 @@ dotenv.config({ path: '.env.development' })
 import app from './app.js'
 
 // Get port from environment
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3002
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3010
 
 // Start server
 const server = app.listen(PORT, () => {

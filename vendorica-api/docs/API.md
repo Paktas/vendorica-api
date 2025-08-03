@@ -10,12 +10,12 @@ Vendorica uses a clear separation between internal and public APIs:
 ## Base URLs
 
 ### Internal API (App Backend)
-- **Development**: `http://localhost:3010/internal`
-- **Production**: `https://api.vendorica.com/internal`
+- **Development**: `http://localhost:3010/internal` (custom port for dev)
+- **Production**: `https://api.vendorica.com/internal` (standard Apache ports 80/443)
 
 ### Public API (Coming Soon)
-- **Development**: `http://localhost:3010/v1`
-- **Production**: `https://api.vendorica.com/v1`
+- **Development**: `http://localhost:3010/v1` (custom port for dev)
+- **Production**: `https://api.vendorica.com/v1` (standard Apache ports 80/443)
 
 ## Authentication
 
@@ -272,7 +272,8 @@ For TypeScript/JavaScript applications, use the generated API client:
 import { ApiClient } from '@vendorica/api-client'
 
 const client = new ApiClient({
-  baseUrl: 'http://localhost:3002',
+  baseUrl: 'http://localhost:3010', // Development only
+  // Production: 'https://api.vendorica.com' (standard ports)
   token: 'your-supabase-jwt-token'
 })
 

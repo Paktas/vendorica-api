@@ -14,7 +14,7 @@ Modern ES Modules-based Node.js API backend for the Vendorica vendor risk manage
 ### 2. Development Environment: Vite + HMR
 - **Technology**: Vite with vite-node for development
 - **Features**: Hot Module Replacement (HMR) for rapid development
-- **Port**: 3002 (from .env.development)
+- **Port**: 3010 (development only - from .env.development)
 - **Command**: `npm run dev`
 
 ### 3. Production Environment: Compiled JavaScript
@@ -26,9 +26,9 @@ Modern ES Modules-based Node.js API backend for the Vendorica vendor risk manage
 ### 4. Configuration Strategy
 - **Environment Files**: All configuration from .env files only
 - **Port Handling**: 
-  - Development: PORT=3002 in .env.development
-  - Production: No PORT variable (Apache handles routing)
-  - Fallback: Vite/Node.js defaults if PORT missing
+  - Development: PORT=3010 in .env.development (custom port for local dev)
+  - Production: No PORT variable (Apache reverse proxy on standard ports 80/443)
+  - Fallback: Framework defaults if PORT missing
 
 ### 5. Path Aliases
 Clean imports using TypeScript path mapping:
@@ -70,11 +70,11 @@ vendorica-api/
 ### Development (.env.development)
 ```env
 NODE_ENV=development
-PORT=3002
+PORT=3010
 DATABASE_URL=postgresql://localhost:5432/vendorica_dev
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_anon_key
-API_BASE_URL=http://localhost:3002
+API_BASE_URL=http://localhost:3010
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 ```
 
@@ -94,7 +94,7 @@ CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
 ### Local Development
 1. `npm install` - Install dependencies
 2. `npm run dev` - Start development server with HMR
-3. API available at http://localhost:3002
+3. API available at http://localhost:3010 (development only)
 4. Changes automatically reload via Vite HMR
 
 ### Production Deployment
@@ -177,7 +177,7 @@ import { config } from './config/environment'
 TypeScript path aliases are resolved during build time by Vite, ensuring clean imports work in both development and production.
 
 ### Port Configuration
-- Development: Explicit PORT=3002 for predictable local development
+- Development: Explicit PORT=3010 for predictable local development (custom port)
 - Production: No port specified, Apache handles all routing
 - Fallback: Framework defaults if environment variable missing
 

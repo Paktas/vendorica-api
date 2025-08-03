@@ -36,19 +36,23 @@ npm run migrate:up
 npm run dev
 ```
 
-### Development URLs
+### Development URLs (Port 3010)
 - **API**: `http://localhost:3010`
 - **Health Check**: `http://localhost:3010/health`
 - **Documentation**: `http://localhost:3010/docs`
 - **Internal API**: `http://localhost:3010/internal/*`
 
+*Note: Port 3010 is used for development only. Production runs on custom domain with standard Apache port 80/443.*
+
 ## Production Setup
+
+Production deployment uses Apache reverse proxy on standard ports (80/443):
 
 ```bash
 # Build the application
 npm run build
 
-# Start production server  
+# Start production server (no custom port)
 npm start
 ```
 
