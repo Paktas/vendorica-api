@@ -109,13 +109,31 @@ jobs:
             
             # Debug PM2 location
             echo -e "\nPM2 location check:"
-            which pm2 || echo "PM2 not in PATH"
-            echo "PATH: $PATH"
+            echo "Current PATH: $PATH"
             
-            # Check common PM2 locations
-            [ -f "$HOME/.npm-global/bin/pm2" ] && echo "Found at: $HOME/.npm-global/bin/pm2"
-            [ -f "/usr/local/bin/pm2" ] && echo "Found at: /usr/local/bin/pm2"
-            [ -f "$HOME/node_modules/.bin/pm2" ] && echo "Found at: $HOME/node_modules/.bin/pm2"
+            # Source profile to get full PATH
+            [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+            [ -f "$HOME/.profile" ] && source "$HOME/.profile"
+            echo "PATH after sourcing profiles: $PATH"
+            
+            # Now check for PM2
+            which pm2 || echo "PM2 not in PATH"
+            
+            # Also check common PM2 locations directly
+            echo -e "\nSearching for PM2 in common locations:"
+            for dir in /usr/local/bin /usr/bin /bin $HOME/.npm-global/bin $HOME/node_modules/.bin /usr/lib/node_modules/.bin $HOME/.nvm/versions/node/*/bin; do
+              if [ -f "$dir/pm2" ]; then
+                echo "✅ Found PM2 at: $dir/pm2"
+                $dir/pm2 --version
+              fi
+            done
+            
+            # Check npm global bin location
+            NPM_BIN=$(npm bin -g 2>/dev/null)
+            if [ -n "$NPM_BIN" ] && [ -f "$NPM_BIN/pm2" ]; then
+              echo "✅ Found PM2 in npm global: $NPM_BIN/pm2"
+              $NPM_BIN/pm2 --version
+            fi
 
       - name: 🧹 Clean Deployment Directory
         uses: appleboy/ssh-action@v1.2.2
@@ -226,16 +244,30 @@ jobs:
           script: |
             cd public_html
             
+            # Source profile to get full PATH
+            [ -f "$HOME/.bashrc" ] && source "$HOME/.bashrc"
+            [ -f "$HOME/.profile" ] && source "$HOME/.profile"
+            
             # Find PM2 executable
             PM2_PATH=""
+            
+            # First try which after sourcing profile
             if command -v pm2 > /dev/null 2>&1; then
               PM2_PATH="pm2"
-            elif [ -f "$HOME/.npm-global/bin/pm2" ]; then
-              PM2_PATH="$HOME/.npm-global/bin/pm2"
-            elif [ -f "/usr/local/bin/pm2" ]; then
-              PM2_PATH="/usr/local/bin/pm2"
-            elif [ -f "$HOME/node_modules/.bin/pm2" ]; then
-              PM2_PATH="$HOME/node_modules/.bin/pm2"
+            else
+              # Try npm global bin
+              NPM_BIN=$(npm bin -g 2>/dev/null)
+              if [ -n "$NPM_BIN" ] && [ -f "$NPM_BIN/pm2" ]; then
+                PM2_PATH="$NPM_BIN/pm2"
+              else
+                # Check other common locations
+                for dir in $HOME/.npm-global/bin /usr/local/bin /usr/lib/node_modules/.bin $HOME/node_modules/.bin; do
+                  if [ -f "$dir/pm2" ]; then
+                    PM2_PATH="$dir/pm2"
+                    break
+                  fi
+                done
+              fi
             fi
             
             if [ -n "$PM2_PATH" ]; then
