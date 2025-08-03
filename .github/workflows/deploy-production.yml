@@ -95,13 +95,23 @@ jobs:
             if [ ! -d ".git" ]; then
               echo "First deployment detected - cloning repository..."
               
-              # Remove any existing files (no backup needed at this maturity)
-              rm -rf * .* 2>/dev/null || true
+              # List current directory contents for debugging
+              echo "Current directory contents:"
+              ls -la
+              
+              # Remove all files and directories (including hidden ones)
+              find . -mindepth 1 -delete 2>/dev/null || true
+              
+              # Verify directory is empty
+              echo "After cleanup:"
+              ls -la
               
               # Clone repository
               git clone https://github.com/Paktas/vendorica-api.git .
               
               echo "Repository cloned successfully"
+              echo "Repository contents:"
+              ls -la
             else
               echo "Existing repository found - pulling latest changes..."
               git fetch origin
@@ -109,7 +119,23 @@ jobs:
             fi
             
             echo "=== INSTALLING DEPENDENCIES ==="
+            
+            # Check if we're in the right directory with package.json
+            if [ -f "package.json" ]; then
+              echo "✅ package.json found"
+            else
+              echo "❌ package.json not found in current directory"
+              echo "Current directory contents:"
+              ls -la
+              exit 1
+            fi
+            
+            # Fix any permission issues
+            echo "Setting proper permissions..."
+            chmod -R 755 .
+            
             # Use npm install instead of npm ci since package-lock.json might not exist
+            echo "Running npm install..."
             npm install --omit=dev
             
             echo "=== BUILDING APPLICATION ==="
