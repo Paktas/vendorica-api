@@ -184,7 +184,7 @@ jobs:
               exit 1
             fi
 
-      - name: 📦 Install Dependencies
+      - name: 📦 Install Dependencies and PM2
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -197,6 +197,24 @@ jobs:
             # Fix npm cache permissions
             echo "Fixing npm cache permissions..."
             sudo chown -R 1012:33 "/home/1462634.cloudwaysapps.com/jwnbrgtuur/.npm" 2>/dev/null || true
+            
+            # Install PM2 globally if not present
+            if ! command -v pm2 > /dev/null 2>&1; then
+              echo "Installing PM2 globally..."
+              npm install -g pm2
+              
+              # Verify PM2 installation
+              if command -v pm2 > /dev/null 2>&1; then
+                echo "✅ PM2 installed successfully: $(which pm2)"
+                echo "PM2 version: $(pm2 --version)"
+              else
+                echo "❌ PM2 installation failed"
+                exit 1
+              fi
+            else
+              echo "✅ PM2 already installed: $(which pm2)"
+              echo "PM2 version: $(pm2 --version)"
+            fi
             
             echo "Installing production dependencies..."
             npm install --omit=dev
@@ -245,72 +263,44 @@ jobs:
           script: |
             cd public_html
             
-            # Check for PM2 global installation
-            if command -v pm2 > /dev/null 2>&1; then
-              echo "✅ PM2 found: $(which pm2)"
-              PM2_PATH="pm2"
+            # PM2 should be available from installation stage
+            echo "Starting PM2 process management..."
+            
+            # Verify logs directory exists
+            if [ -d "$HOME/logs" ]; then
+              echo "✅ Using existing logs directory: ~/logs/"
             else
-              echo "❌ PM2 not found in PATH"
-              echo "Installing PM2 globally..."
-              npm install -g pm2
-              
-              # Verify installation
-              if command -v pm2 > /dev/null 2>&1; then
-                echo "✅ PM2 installed successfully: $(which pm2)"
-                PM2_PATH="pm2"
-              else
-                echo "❌ PM2 installation failed"
-                echo "Application built but cannot start with PM2"
-                exit 1
-              fi
+              echo "❌ Logs directory not found at ~/logs/"
+              exit 1
             fi
             
-            if [ -n "$PM2_PATH" ]; then
-              echo "PM2 found at: $PM2_PATH"
+            # Verify ecosystem config exists and test it
+            if [ -f "ecosystem.config.mjs" ]; then
+              echo "✅ ecosystem.config.mjs found"
+              echo "Config file contents:"
+              head -5 ecosystem.config.mjs
               
-              # Verify logs directory exists
-              if [ -d "$HOME/logs" ]; then
-                echo "✅ Using existing logs directory: ~/logs/"
-              else
-                echo "❌ Logs directory not found at ~/logs/"
-                exit 1
-              fi
-              
-              # Verify ecosystem config exists and test it
-              if [ -f "ecosystem.config.mjs" ]; then
-                echo "✅ ecosystem.config.mjs found"
-                echo "Config file contents:"
-                head -5 ecosystem.config.mjs
+              # Try starting with explicit syntax
+              echo "Attempting to start PM2 process..."
+              pm2 start ecosystem.config.mjs --env production 2>&1 || {
+                echo "❌ PM2 start with .mjs failed, trying alternative approach..."
                 
-                # Test if PM2 can read the config
-                echo "Testing PM2 config validation..."
-                $PM2_PATH prettylist 2>/dev/null || true
-                
-                # Try starting with explicit syntax
-                echo "Attempting to start PM2 process..."
-                $PM2_PATH start ecosystem.config.mjs --env production 2>&1 || {
-                  echo "❌ PM2 start with .mjs failed, trying alternative approach..."
-                  
-                  # Alternative: start directly with script path
-                  if [ -f "dist/index.js" ]; then
-                    echo "Starting PM2 directly with script path..."
-                    $PM2_PATH start dist/index.js --name vendorica-api --instances 2 --env production 2>&1
-                  else
-                    echo "❌ dist/index.js not found"
-                    exit 1
-                  fi
-                }
-              else
-                echo "❌ ecosystem.config.mjs missing"
-                exit 1
-              fi
-              
-              $PM2_PATH save
-              echo "✅ PM2 process configured"
+                # Alternative: start directly with script path
+                if [ -f "dist/index.js" ]; then
+                  echo "Starting PM2 directly with script path..."
+                  pm2 start dist/index.js --name vendorica-api --instances 2 --env production 2>&1
+                else
+                  echo "❌ dist/index.js not found"
+                  exit 1
+                fi
+              }
             else
-              echo "⚠️ PM2 not installed - please install PM2 or contact Cloudways support"
-              echo "Application built but not running"
+              echo "❌ ecosystem.config.mjs missing"
+              exit 1
             fi
+            
+            pm2 save
+            echo "✅ PM2 process configured"
 
       - name: 🏁 Deployment Summary
         uses: appleboy/ssh-action@v1.2.2
