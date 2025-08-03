@@ -173,16 +173,16 @@ jobs:
             
             # Backup environment files before cleaning
             echo "Backing up environment files..."
-            [ -f ".env.production" ] && cp .env.production .env.production.backup
-            [ -f ".env.local" ] && cp .env.local .env.local.backup
+            [ -f ".env.production" ] && cp .env.production /tmp/.env.production.backup && echo "Backed up .env.production"
+            [ -f ".env.local" ] && cp .env.local /tmp/.env.local.backup && echo "Backed up .env.local"
             
-            echo "Cleaning directory (preserving environment files)..."
-            find . -mindepth 1 -maxdepth 1 ! -name ".env.*.backup" -exec rm -rf {} +
+            echo "Cleaning directory completely..."
+            rm -rf * .[^.]* 2>/dev/null || true
             
             # Restore environment files
             echo "Restoring environment files..."
-            [ -f ".env.production.backup" ] && mv .env.production.backup .env.production && echo "✅ Restored .env.production"
-            [ -f ".env.local.backup" ] && mv .env.local.backup .env.local && echo "✅ Restored .env.local"
+            [ -f "/tmp/.env.production.backup" ] && mv /tmp/.env.production.backup .env.production && echo "✅ Restored .env.production"
+            [ -f "/tmp/.env.local.backup" ] && mv /tmp/.env.local.backup .env.local && echo "✅ Restored .env.local"
             
             echo "Directory after cleanup:"
             ls -la
