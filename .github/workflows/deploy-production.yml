@@ -33,21 +33,49 @@ jobs:
           echo "SSH Key length: ${#CLOUDWAYS_SSH_KEY}"
           echo "SSH Key starts with: ${CLOUDWAYS_SSH_KEY:0:50}..."
           
-          # Check if secrets are actually set
+          # Check for each secret
           if [ -z "${{ secrets.CLOUDWAYS_HOST }}" ]; then
             echo "❌ CLOUDWAYS_HOST secret is not set!"
+          else
+            echo "✅ CLOUDWAYS_HOST is set (${#HOST_VALUE} chars)"
           fi
+          
           if [ -z "${{ secrets.CLOUDWAYS_USER }}" ]; then
             echo "❌ CLOUDWAYS_USER secret is not set!"
+          else
+            echo "✅ CLOUDWAYS_USER is set (${#USER_VALUE} chars)"
           fi
+          
           if [ -z "${{ secrets.CLOUDWAYS_SSH_KEY }}" ]; then
             echo "❌ CLOUDWAYS_SSH_KEY secret is not set!"
+          else
+            echo "✅ CLOUDWAYS_SSH_KEY is set (${#CLOUDWAYS_SSH_KEY} chars)"
+            
+            # Check if SSH key is base64 encoded
+            if echo "${CLOUDWAYS_SSH_KEY}" | grep -q "^-----BEGIN"; then
+              echo "✅ SSH key format looks correct (starts with -----BEGIN)"
+            else
+              echo "⚠️ SSH key might be base64 encoded or incorrect format"
+              echo "First 30 chars: ${CLOUDWAYS_SSH_KEY:0:30}"
+              
+              # Try to decode and check
+              if echo "${CLOUDWAYS_SSH_KEY}" | base64 -d 2>/dev/null | grep -q "^-----BEGIN"; then
+                echo "❌ SSH key IS base64 encoded! It should be plain text."
+                echo "The key should start with: -----BEGIN RSA PRIVATE KEY-----"
+              fi
+            fi
           fi
+          
           if [ -z "${{ secrets.CLOUDWAYS_PORT }}" ]; then
             echo "❌ CLOUDWAYS_PORT secret is not set!"
+          else
+            echo "✅ CLOUDWAYS_PORT is set (${#PORT_VALUE} chars)"
           fi
         env:
           CLOUDWAYS_SSH_KEY: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          HOST_VALUE: ${{ secrets.CLOUDWAYS_HOST }}
+          USER_VALUE: ${{ secrets.CLOUDWAYS_USER }}
+          PORT_VALUE: ${{ secrets.CLOUDWAYS_PORT }}
 
       - name: Manual SSH Test
         run: |
