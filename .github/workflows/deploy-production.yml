@@ -203,13 +203,28 @@ jobs:
               echo "Installing PM2 globally..."
               npm install -g pm2
               
-              # Verify PM2 installation
+              # Refresh PATH and verify PM2 installation
+              export PATH="$(npm config get prefix)/bin:$PATH"
+              hash -r  # Clear bash command cache 
+              
               if command -v pm2 > /dev/null 2>&1; then
                 echo "✅ PM2 installed successfully: $(which pm2)"
                 echo "PM2 version: $(pm2 --version)"
               else
-                echo "❌ PM2 installation failed"
-                exit 1
+                # Try common npm global bin locations
+                NPM_PREFIX=$(npm config get prefix)
+                if [ -f "$NPM_PREFIX/bin/pm2" ]; then
+                  echo "✅ PM2 found at: $NPM_PREFIX/bin/pm2"
+                  export PATH="$NPM_PREFIX/bin:$PATH"
+                  echo "PM2 version: $(pm2 --version)"
+                else
+                  echo "❌ PM2 installation failed - not found in expected locations"
+                  echo "npm prefix: $NPM_PREFIX"
+                  echo "Checking for PM2 in common locations:"
+                  ls -la /usr/local/bin/pm2 2>/dev/null || echo "Not in /usr/local/bin/"
+                  ls -la ~/.npm-global/bin/pm2 2>/dev/null || echo "Not in ~/.npm-global/bin/"
+                  exit 1
+                fi
               fi
             else
               echo "✅ PM2 already installed: $(which pm2)"
