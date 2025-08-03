@@ -235,6 +235,55 @@ The architecture supports various deployment platforms including managed hosting
 
 This design balances modern development experience with production reliability while maintaining simplicity and platform independence.
 
+## PM2 Setup for Cloudways
+
+**Important**: PM2 is not available by default on Cloudways servers and requires manual setup.
+
+### Installation Process
+
+1. **Contact Cloudways Support**: Request PM2 installation on your server
+   - PM2 requires Node.js global package installation
+   - Cloudways support will install PM2 in the system
+
+2. **Configure User Environment**: After installation, PM2 needs to be accessible to your application user
+   - Cloudways creates a `.bash_aliases` file in your home directory
+   - This file contains the PM2 alias and PATH configuration
+   - Example content:
+   ```bash
+   export PATH='/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm'
+   export NODE_PATH=':/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm/lib/node_modules'
+   alias pm2='/home/1462634.cloudwaysapps.com/jwnbrgtuur/bin/npm/lib/node_modules/bin/pm2'
+   ```
+
+3. **GitHub Actions Integration**: The deployment workflow automatically:
+   - Sources the `.bash_aliases` file for PM2 access
+   - Detects PM2 via the alias path
+   - Falls back to direct script execution if PM2 config fails
+
+### Manual Verification
+
+To verify PM2 is working correctly on your server:
+
+```bash
+# SSH into your server
+ssh user@your-server.com
+
+# Source the aliases file
+source ~/.bash_aliases
+
+# Test PM2
+pm2 --version
+
+# Check if your app is running
+pm2 status
+```
+
+### Troubleshooting
+
+**PM2 Not Found**: Ensure `.bash_aliases` is sourced in your shell session
+**Permission Issues**: Contact Cloudways support to verify PM2 installation
+**Path Issues**: The deployment workflow handles PM2 path detection automatically
+
 ## Recent Architectural Improvements
 
 ### Security Enhancements
@@ -259,5 +308,5 @@ This design balances modern development experience with production reliability w
 - **Cloudways Integration**: Optimized for managed hosting with automatic configuration
 - **GitHub Actions CI/CD**: Automated deployments with testing and verification
 - **Zero-Configuration Apache**: Web server automatically configured by Cloudways
-- **PM2 Clustering**: Process management with load balancing (requires installation)
+- **PM2 Clustering**: Process management with load balancing (requires manual setup - see PM2 Setup section)
 - **SSL/Security**: Automatic certificate management and security headers
