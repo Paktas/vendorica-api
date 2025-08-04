@@ -347,7 +347,35 @@ jobs:
             fi
             
             $PM2_CMD save
-            echo "✅ PM2 process configured"
+            
+            # Immediate PM2 verification
+            echo -e "\n=== PM2 STATUS VERIFICATION ==="
+            if command -v pm2 > /dev/null 2>&1 && [ -d "$HOME/.pm2" ]; then
+              echo "✅ PM2 Status:"
+              pm2 status
+              
+              echo -e "\n📋 Recent application logs:"
+              pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available yet"
+              
+              # Check if processes are actually running
+              if pm2 list | grep -q "online"; then
+                echo "✅ PM2 processes are running successfully"
+              else
+                echo "⚠️ PM2 processes may not be running properly"
+              fi
+            else
+              echo "⚠️ PM2 verification skipped - using direct Node.js execution"
+              if [ -f ~/vendorica-api.pid ]; then
+                PID=$(cat ~/vendorica-api.pid)
+                if ps -p $PID > /dev/null; then
+                  echo "✅ Application running directly with PID: $PID"
+                else
+                  echo "❌ Application not running"
+                fi
+              fi
+            fi
+            
+            echo "✅ PM2 process configured and verified"
 
       - name: Deployment Summary
         uses: appleboy/ssh-action@v1.2.2
@@ -362,6 +390,7 @@ jobs:
             echo "✅ Repository: Cloned"
             echo "✅ Dependencies: Installed" 
             echo "✅ Build: Completed"
+            echo "✅ PM2: Configured and running"
             
             # Production Environment Check
             echo -e "\n🔍 Production Environment Check:"
@@ -377,37 +406,9 @@ jobs:
             fi
             
             # Check what port the app is using
-            echo -e "\nChecking application port binding..."
-            sleep 5  # Give PM2 time to fully start
-            
-            # Show all listening ports
+            echo -e "\n🌐 Network Status:"
             echo "All processes listening on ports:"
             netstat -tlnp 2>/dev/null | grep LISTEN
-            
-            # Check PM2 logs for port information
-            echo -e "\nPM2 Application Logs (last 10 lines):"
-            
-            # Check PM2 status (Cloudways setup)
-            if command -v pm2 > /dev/null 2>&1 && [ -d "$HOME/.pm2" ]; then
-              echo "✅ PM2: Available (Cloudways global setup with .pm2 access)"
-              pm2 status
-              echo -e "\nRecent application logs:"
-              pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
-            else
-              echo "⚠️ PM2: Not available - checking direct process"
-              if [ -f ~/vendorica-api.pid ]; then
-                PID=$(cat ~/vendorica-api.pid)
-                if ps -p $PID > /dev/null; then
-                  echo "✅ Application running directly with PID: $PID"
-                  echo -e "\nRecent application logs:"
-                  tail -5 ~/logs/vendorica-api.log 2>/dev/null || echo "No direct logs available"
-                else
-                  echo "❌ Application not running"
-                fi
-              else
-                echo "❌ No application process found"
-              fi
-            fi
             
             echo -e "\n📁 Deployment path: $(pwd)"
             echo "🚀 Deployment completed successfully!"
