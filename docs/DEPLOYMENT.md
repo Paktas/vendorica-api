@@ -224,28 +224,39 @@ export default {
 
 ### 5. Apache Configuration (.htaccess)
 
-**Create .htaccess file for Node.js routing**:
+**Apache proxy configuration is included in the repository**:
 
-The deployment workflow automatically creates this file, but you can also create it manually:
+The `.htaccess` file is already included in the repository with the following configuration:
 
 ```apache
-# .htaccess in public_html directory
+# Vendorica API - Apache Proxy Configuration
+# Routes all requests to Node.js application on port 3000
+
 RewriteEngine On
 
-# Route all requests to Node.js application on port 3000
+# Exclude Let's Encrypt challenge paths for SSL renewal
 RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+
+# Proxy all requests to Node.js application
 RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
 
-# Enable proxy module
-RewriteEngine On
+# Additional headers for proxied requests
+<IfModule mod_headers.c>
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
+</IfModule>
 ```
 
 This configuration:
 - Routes all HTTP requests to your Node.js app running on port 3000
 - Maintains SSL termination at Apache level
 - Excludes Let's Encrypt challenge paths for SSL renewal
+- Sets proper forwarded headers for your application
 
-**Note**: The deployment workflow automatically creates this file during the first deployment.
+**Notes**: 
+- The .htaccess file is version controlled and deployed automatically with your code
+- For local development, this file won't affect you unless you're running Apache locally
+- The file only takes effect on Apache servers (like Cloudways)
 
 ### 6. First Deployment
 
