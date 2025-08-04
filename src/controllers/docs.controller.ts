@@ -10,7 +10,9 @@ export class DocsController {
     try {
       // Get the base URL from the request (completely dynamic - no hardcoded values)
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
-      const host = req.headers['x-forwarded-host'] || req.headers.host
+      const rawHost = req.headers['x-forwarded-host'] || req.headers.host
+      // Fix: Handle multiple hosts from proxy by taking the first one
+      const host = Array.isArray(rawHost) ? rawHost[0] : rawHost?.split(',')[0]?.trim()
       const baseUrl = `${protocol}://${host}`
       
       const html = `<!DOCTYPE html>
@@ -62,7 +64,9 @@ export class DocsController {
     try {
       // Get the base URL from the request (completely dynamic - no hardcoded values)
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'http'
-      const host = req.headers['x-forwarded-host'] || req.headers.host
+      const rawHost = req.headers['x-forwarded-host'] || req.headers.host
+      // Fix: Handle multiple hosts from proxy by taking the first one
+      const host = Array.isArray(rawHost) ? rawHost[0] : rawHost?.split(',')[0]?.trim()
       const baseUrl = `${protocol}://${host}`
       
       // Create a dynamic spec with only the current server URL
