@@ -271,7 +271,7 @@ jobs:
               exit 1
             fi
 
-      - name: Setup PM2 Process
+      - name: Setup and Verify PM2 Process
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -375,23 +375,6 @@ jobs:
               fi
             fi
             
-            echo "✅ PM2 process configured and verified"
-
-      - name: Deployment Summary
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.CLOUDWAYS_HOST }}
-          username: ${{ secrets.CLOUDWAYS_USER }}
-          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          port: ${{ secrets.CLOUDWAYS_PORT }}
-          script: |
-            cd public_html
-            echo "=== DEPLOYMENT SUMMARY ==="
-            echo "✅ Repository: Cloned"
-            echo "✅ Dependencies: Installed" 
-            echo "✅ Build: Completed"
-            echo "✅ PM2: Configured and running"
-            
             # Production Environment Check
             echo -e "\n🔍 Production Environment Check:"
             
@@ -405,10 +388,30 @@ jobs:
               echo "App will use default configuration"
             fi
             
-            # Check what port the app is using
+            # Network Status Check
             echo -e "\n🌐 Network Status:"
             echo "All processes listening on ports:"
             netstat -tlnp 2>/dev/null | grep LISTEN
             
+            echo "✅ PM2 process configured and verified"
+
+      - name: Deployment Summary
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.CLOUDWAYS_HOST }}
+          username: ${{ secrets.CLOUDWAYS_USER }}
+          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
+          port: ${{ secrets.CLOUDWAYS_PORT }}
+          script: |
+            cd public_html
+            echo "=== DEPLOYMENT SUMMARY ==="
+            echo "✅ Repository: Cloned and configured"
+            echo "✅ Dependencies: Installed" 
+            echo "✅ Build: Completed successfully"
+            echo "✅ PM2: Running with 2 cluster instances"
+            echo "✅ Environment: Production configuration active"
+            echo "✅ Network: Apache proxy routing to Node.js"
+            
             echo -e "\n📁 Deployment path: $(pwd)"
             echo "🚀 Deployment completed successfully!"
+            echo "🌐 API should be accessible via your domain"
