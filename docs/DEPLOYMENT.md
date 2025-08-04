@@ -128,7 +128,24 @@ ls -la           # Should be empty or contain default files
 
 ### 3. Environment Configuration
 
-**Security**: All environment files are ignored by git except `.env.example`
+**Security**: All `.env.*` files are ignored by git except `.env.example`
+
+**Setup Process**:
+1. Copy `.env.example` to `.env.development` and `.env.production`
+2. Fill in actual values for your environment
+3. Never commit actual environment files
+
+**Development (.env.development)**:
+```env
+NODE_ENV=development
+PORT=3010
+DATABASE_URL=postgresql://localhost:5432/vendorica_dev
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+API_BASE_URL=http://localhost:3010
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+JWT_SECRET=your-development-jwt-secret
+```
 
 ```bash
 # Copy environment template
@@ -477,6 +494,21 @@ pm2 monit
 Similar to Cloudways but requires manual Apache/Nginx configuration and PM2 installation.
 
 See previous version of this file or contact support for manual VPS setup details.
+
+---
+
+## Development Workflow
+
+### Local Development
+1. `npm install` - Install dependencies
+2. `npm run dev` - Start development server with HMR
+3. API available at http://localhost:3010 (development only)
+4. Changes automatically reload via Vite HMR
+
+### Production Deployment
+1. `npm run build` - Compile TypeScript to JavaScript
+2. `npm start` - Start production server via PM2
+3. Apache reverse proxy routes to Node.js application
 
 ---
 

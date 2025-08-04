@@ -75,7 +75,8 @@ vendorica-api/
 ├── .env.development        # Development environment (IGNORED by git)
 ├── .env.production         # Production environment (IGNORED by git)
 ├── .env.example            # Environment template (tracked)
-├── ecosystem.config.js     # PM2 configuration
+├── .htaccess               # Apache proxy configuration (production)
+├── ecosystem.config.mjs    # PM2 configuration (ES modules)
 ├── package.json            # Dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
 ├── vite.config.ts          # Vite configuration
@@ -84,53 +85,6 @@ vendorica-api/
         └── deploy-production.yml # CI/CD pipeline
 ```
 
-## Environment Configuration
-
-### Environment Files (.env.*)
-
-**Security**: All `.env.*` files are ignored by git except `.env.example`
-
-**Setup Process**:
-1. Copy `.env.example` to `.env.development` and `.env.production`
-2. Fill in actual values for your environment
-3. Never commit actual environment files
-
-**Development (.env.development)**:
-```env
-NODE_ENV=development
-PORT=3010
-DATABASE_URL=postgresql://localhost:5432/vendorica_dev
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_anon_key
-API_BASE_URL=http://localhost:3010
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001
-JWT_SECRET=your-development-jwt-secret
-```
-
-**Production (.env.production)**:
-```env
-NODE_ENV=production
-# NO PORT - Web server handles routing
-DATABASE_URL=postgresql://prod-db:5432/vendorica_prod
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_production_anon_key
-API_BASE_URL=https://api.vendorica.com
-CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
-JWT_SECRET=your-production-jwt-secret
-```
-
-## Development Workflow
-
-### Local Development
-1. `npm install` - Install dependencies
-2. `npm run dev` - Start development server with HMR
-3. API available at http://localhost:3010 (development only)
-4. Changes automatically reload via Vite HMR
-
-### Production Deployment
-1. `npm run build` - Compile TypeScript to JavaScript
-2. `npm start` - Start production server via PM2
-3. Apache reverse proxy routes to Node.js application
 
 ## Technology Stack
 
