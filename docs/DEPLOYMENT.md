@@ -313,6 +313,8 @@ This configuration:
 - If you get 404 errors: Check that webroot is set to `/public_html/dist` in Cloudways
 - If you get 500 errors: mod_proxy is not enabled - contact Cloudways support
 - The `.htaccess` must be in the webroot directory (`dist/`) to work
+- **If app shows "development" environment**: Create `.env.production` file and restart PM2 with `--env production`
+- **If PM2 processes restart repeatedly**: Check `pm2 logs` for import errors, rebuild with `npm run build`
 
 ### 6. First Deployment
 
