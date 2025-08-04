@@ -24,7 +24,10 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
 - **GitHub Repository** with vendorica-api
 - **Domain**: Pointing to Cloudways server
 - **Database**: Supabase or external PostgreSQL
-- **PM2**: Request installation from Cloudways support
+- **PM2**: Request installation from Cloudways support (see section 4)
+- **mod_proxy**: Request enablement from Cloudways support (see section 4)
+
+⚠️ **Critical**: Both PM2 and mod_proxy MUST be enabled by Cloudways support before your application will work
 
 ### 1. Cloudways Application Setup
 
@@ -189,13 +192,21 @@ API_DESCRIPTION=Enterprise vendor risk management platform API
 
 **Required Steps**:
 
-1. **Contact Cloudways Support**
-   - Open a support ticket requesting PM2 installation
+1. **Contact Cloudways Support for TWO critical items**:
+   
+   **A. PM2 Installation**
+   - Request: "Please install PM2 globally for Node.js process management"
    - Ask them to run: `sudo npm install --location=global pm2@latest`
    - **Important**: PM2 should be installed globally on the root user, NOT on the "master" user
    - The master user is for server management, not application processes
    - This is the ONLY supported method for Cloudways
-   - Usually completed within 24 hours
+   
+   **B. mod_proxy Enablement**
+   - Request: "Please enable mod_proxy and mod_proxy_http for Node.js application"
+   - This is required for Apache to proxy requests to your Node.js app
+   - Without this, you'll get 500 errors even if everything else is configured correctly
+   
+   Both requests are usually completed within 24 hours
 
 2. **Application PM2 Access Setup** (handled automatically by deployment)
    - The deployment workflow creates a `.pm2` directory in your app's home directory
@@ -241,39 +252,58 @@ export default {
 
 ### 5. Apache Configuration (.htaccess)
 
-**Apache proxy configuration is included in the repository**:
+**IMPORTANT: mod_proxy Setup Required**
 
-The `.htaccess` file is already included in the repository with the following configuration:
+Before your Node.js application can work on Cloudways, you MUST:
+
+1. **Contact Cloudways Support** to enable `mod_proxy` on your server
+   - Open a support ticket requesting: "Please enable mod_proxy for Node.js application"
+   - This is disabled by default on Cloudways servers
+   - Support usually enables it within 24 hours
+
+2. **Webroot Configuration**
+   - Cloudways webroot should be set to: `/public_html/dist`
+   - The `.htaccess` file will be automatically copied to `dist/` during deployment
+
+**Apache proxy configuration (Cloudways-specific)**:
+
+The `.htaccess` file is included in the repository root and automatically deployed to `dist/`:
 
 ```apache
-# Vendorica API - Apache Proxy Configuration
+# Vendorica API - Cloudways Node.js Configuration
 # Routes all requests to Node.js application on port 3000
 
+# Disable DirectoryIndex (required for Cloudways Node.js apps)
+DirectoryIndex disabled
+
+# Enable URL rewriting
 RewriteEngine On
+RewriteBase /
 
 # Exclude Let's Encrypt challenge paths for SSL renewal
 RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
 
-# Proxy all requests to Node.js application
-RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+# Proxy all requests to Node.js application on port 3000
+RewriteRule ^(.*)?$ http://127.0.0.1:3000/$1 [P,L]
 
-# Additional headers for proxied requests
-<IfModule mod_headers.c>
-    RequestHeader set X-Forwarded-Proto "https"
-    RequestHeader set X-Forwarded-Port "443"
-</IfModule>
+# Note: mod_proxy must be enabled by Cloudways support
 ```
 
 This configuration:
+- Disables DirectoryIndex as required by Cloudways for Node.js apps
 - Routes all HTTP requests to your Node.js app running on port 3000
 - Maintains SSL termination at Apache level
 - Excludes Let's Encrypt challenge paths for SSL renewal
-- Sets proper forwarded headers for your application
 
-**Notes**: 
-- The .htaccess file is version controlled and deployed automatically with your code
-- For local development, this file won't affect you unless you're running Apache locally
-- The file only takes effect on Apache servers (like Cloudways)
+**Deployment Process**:
+- The `.htaccess` file is stored in the repository root
+- During build, it's automatically copied to `dist/` (the webroot)
+- This ensures the proxy configuration is always in the correct location
+
+**Troubleshooting**:
+- If you get 404 errors: Check that webroot is set to `/public_html/dist` in Cloudways
+- If you get 500 errors: mod_proxy is not enabled - contact Cloudways support
+- The `.htaccess` must be in the webroot directory (`dist/`) to work
 
 ### 6. First Deployment
 
