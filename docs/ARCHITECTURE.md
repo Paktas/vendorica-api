@@ -237,36 +237,41 @@ This design balances modern development experience with production reliability w
 
 ## PM2 Setup (Industry Best Practice)
 
-### Cloudways Master User Installation (Optimal for Cloudways)
+### Cloudways Global PM2 Installation (Official Cloudways Approach)
 
-Cloudways installs PM2 on the master user account, which is optimal for their multi-tenant environment:
+Based on Cloudways support guidance, PM2 should be installed globally on the root user and each application needs a `.pm2` directory for access:
 
 ```bash
-# Cloudways master user setup (done by Cloudways support)
-# PM2 installed at: /home/master/bin/npm/lib/node_modules/bin/pm2
-# Configured via: /home/master/.bash_aliases
+# 1. Global PM2 installation (done by Cloudways support only)
+sudo npm install --location=global pm2@latest
 
-# Master user can manage PM2 for all applications
-sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 status'
+# 2. Application-specific setup (done automatically by deployment)
+mkdir -p ~/.pm2
+chown -R appuser:www-data ~/.pm2
+
+# 3. Verify access
+pm2 --version
+pm2 status
 ```
 
 ### Deployment Workflow
 
-The deployment workflow automatically detects and uses the optimal PM2 installation:
+The deployment workflow implements the official Cloudways PM2 setup:
 
-1. **Cloudways master user PM2** (optimal for Cloudways hosting)
-2. **System-level PM2** (`sudo pm2`) (good for other hosting)
-3. **User PM2** (`pm2`) (fallback option)
-4. **Direct Node.js execution** (final fallback)
+1. **Check global PM2** installation (installed by Cloudways support)
+2. **Create .pm2 directory** in application home directory 
+3. **Set proper permissions** (`appuser:www-data`)
+4. **Use PM2 directly** (no sudo or aliases needed)
+5. **Fallback to direct Node.js** if PM2 setup incomplete
 
-### Why Cloudways Master User PM2?
+### Why This Approach?
 
-**Advantages for Cloudways Hosting:**
-- **Centralized management**: Master user controls all PM2 processes
-- **Multi-tenant isolation**: Each app user's processes are isolated
-- **Cloudways integration**: Works with Cloudways monitoring and management
-- **Consistent access**: All applications use the same PM2 instance
-- **Support friendly**: Cloudways support can manage PM2 centrally
+**Advantages per Cloudways Support:**
+- **Official support**: This is how Cloudways officially supports PM2
+- **Multi-tenant safe**: Each app gets its own `.pm2` workspace
+- **Simple access**: Applications can use `pm2` directly without complex commands
+- **Support friendly**: Cloudways support can manage the global installation
+- **Scalable**: Works across all applications on the server
 
 ### Manual Verification
 
@@ -276,23 +281,52 @@ To verify PM2 is working correctly on your Cloudways server:
 # SSH into your server as application user
 ssh appuser@your-server.com
 
-# Check master user PM2 (Cloudways approach)
-sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 --version'
+# Check if .pm2 directory exists (should be created by deployment)
+ls -la ~/.pm2
+
+# Check global PM2 installation
+pm2 --version
 
 # Check if your app is running
-sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 status'
+pm2 status
 
 # View application logs
-sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 logs vendorica-api'
+pm2 logs vendorica-api
+
+# If PM2 doesn't work, create .pm2 directory manually:
+mkdir -p ~/.pm2
+chown -R $(whoami):www-data ~/.pm2
 ```
 
-### Benefits of Master User Installation
+### Benefits of Global Installation with .pm2 Directories
 
-- **Centralized control**: All PM2 processes managed by master user
-- **Multi-tenant security**: Application users can't interfere with each other's processes
-- **Cloudways integration**: Works seamlessly with Cloudways management tools
-- **Professional hosting**: Standard approach for managed hosting environments
-- **Automated deployment**: GitHub Actions handles the complexity automatically
+- **Official approach**: Follows Cloudways support's recommended setup
+- **Multi-tenant security**: Each app gets isolated `.pm2` workspace
+- **Simple deployment**: Applications can use `pm2` directly without complex commands  
+- **Support friendly**: Cloudways support manages the global PM2 installation
+- **Automated setup**: GitHub Actions creates and configures `.pm2` directories automatically
+- **Scalable**: Easy to add new applications with their own PM2 access
+
+### Setup Requirements
+
+**For Cloudways Users:**
+
+1. **Request PM2 Installation**: Contact Cloudways support to install PM2 globally:
+   - Ask them to run: `sudo npm install --location=global pm2@latest`
+   - This only needs to be done once per server
+
+2. **Deploy Your Application**: The deployment workflow automatically:
+   - Creates the required `.pm2` directory in your app's home directory
+   - Sets proper permissions (`appuser:www-data`)
+   - Verifies PM2 access before starting processes
+
+3. **Verify Setup**: After deployment:
+   ```bash
+   pm2 --version  # Should show PM2 version
+   pm2 status    # Should show your running processes
+   ```
+
+**No manual setup required** - the deployment handles everything after Cloudways installs PM2 globally.
 
 ## Recent Architectural Improvements
 

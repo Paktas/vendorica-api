@@ -198,38 +198,39 @@ jobs:
             echo "Fixing npm cache permissions..."
             sudo chown -R 1012:33 "/home/1462634.cloudwaysapps.com/jwnbrgtuur/.npm" 2>/dev/null || true
             
-            # Check PM2 installation status
-            echo "=== PM2 INSTALLATION DIAGNOSTICS ==="
+            # Check Cloudways PM2 setup (as per Cloudways support guidance)
+            echo "=== CLOUDWAYS PM2 SETUP ==="
             echo "Current user: $(whoami)"
-            echo "Current PATH: $PATH"
-            echo "npm prefix: $(npm config get prefix)"
-            echo "npm global bin: $(npm bin -g 2>/dev/null || echo 'not available')"
+            echo "Current directory: $(pwd)"
             
-            # Check if PM2 is available anywhere
-            echo -e "\nSearching for existing PM2 installations:"
-            find /usr /home -name "pm2" -type f 2>/dev/null | head -10 || echo "No PM2 found with find command"
-            
-            # Check if there's a system-wide or master user PM2
-            if sudo which pm2 2>/dev/null; then
-              echo "✅ System/Master PM2 found: $(sudo which pm2)"
-              echo "System/Master PM2 version: $(sudo pm2 --version 2>/dev/null || echo 'version check failed')"
-            fi
-            
-            # Check for Cloudways master user PM2 setup
-            if sudo test -f /home/master/.bash_aliases; then
-              echo "✅ Found Cloudways master user setup"
-              echo "Master .bash_aliases content:"
-              sudo head -5 /home/master/.bash_aliases 2>/dev/null || echo "Cannot read master aliases"
-            fi
-            
-            # Check current user PM2 (but prefer system PM2)
+            # Check if PM2 is installed globally by root (done by Cloudways support)
             if command -v pm2 > /dev/null 2>&1; then
-              echo "ℹ️ User PM2 found: $(which pm2)"
-              echo "User PM2 version: $(pm2 --version)"
-              echo "Note: System PM2 will be preferred if available"
+              echo "✅ Global PM2 found: $(which pm2)"
+              echo "PM2 version: $(pm2 --version)"
             else
-              echo "ℹ️ No user PM2 found"
-              echo "This is fine - system PM2 is preferred for production"
+              echo "❌ PM2 not found globally"
+              echo "PM2 must be installed by Cloudways support using:"
+              echo "sudo npm install --location=global pm2@latest"
+            fi
+            
+            # Check/Create .pm2 directory for this application (Cloudways requirement)
+            if [ -d "$HOME/.pm2" ]; then
+              echo "✅ .pm2 directory exists: $HOME/.pm2"
+              ls -la "$HOME/.pm2" | head -3
+            else
+              echo "Creating .pm2 directory for application PM2 access..."
+              mkdir -p "$HOME/.pm2"
+              chown -R $(whoami):www-data "$HOME/.pm2" 2>/dev/null || chown -R $(whoami):$(id -gn) "$HOME/.pm2"
+              echo "✅ Created .pm2 directory with proper permissions"
+              ls -la "$HOME/.pm2"
+            fi
+            
+            # Verify PM2 access for current user
+            if command -v pm2 > /dev/null 2>&1 && [ -d "$HOME/.pm2" ]; then
+              echo "✅ PM2 should be accessible for current user"
+              pm2 ping 2>/dev/null && echo "✅ PM2 daemon responsive" || echo "⚠️ PM2 daemon not responsive"
+            else
+              echo "❌ PM2 setup incomplete - check global installation and .pm2 directory"
             fi
             
             echo "Installing production dependencies..."
@@ -282,24 +283,22 @@ jobs:
             # PM2 process management with fallback options
             echo "Starting PM2 process management..."
             
-            # Determine which PM2 to use (prefer Cloudways master user PM2)
-            PM2_CMD=""
-            if sudo test -f /home/master/.bash_aliases && sudo grep -q "pm2" /home/master/.bash_aliases; then
-              # Use Cloudways master user PM2 (optimal for Cloudways)
-              PM2_CMD="sudo -u master bash -c 'source /home/master/.bash_aliases && pm2'"
-              echo "✅ Using Cloudways master user PM2"
-              echo "This is optimal for Cloudways multi-tenant environment"
-            elif sudo which pm2 > /dev/null 2>&1; then
-              PM2_CMD="sudo pm2"
-              echo "✅ Using system PM2: $(sudo which pm2)"
-              echo "This is good for production multi-tenant environment"
-            elif command -v pm2 > /dev/null 2>&1; then
+            # Use PM2 with Cloudways setup (global PM2 + .pm2 directory)
+            if command -v pm2 > /dev/null 2>&1 && [ -d "$HOME/.pm2" ]; then
+              echo "✅ Using Cloudways PM2 setup"
+              echo "Global PM2 with application .pm2 directory access"
               PM2_CMD="pm2"
-              echo "⚠️ Using user PM2: $(which pm2)"
-              echo "Note: Master user PM2 would be better for Cloudways"
             else
-              echo "❌ No PM2 available - will run application directly"
-              # Start app directly without PM2
+              echo "❌ Cloudways PM2 setup incomplete"
+              if ! command -v pm2 > /dev/null 2>&1; then
+                echo "Missing: Global PM2 installation (contact Cloudways support)"
+              fi
+              if [ ! -d "$HOME/.pm2" ]; then
+                echo "Missing: .pm2 directory (should have been created above)"
+              fi
+              
+              # Fallback to direct Node.js execution
+              echo "Falling back to direct Node.js execution..."
               if [ -f "dist/index.js" ]; then
                 echo "Starting application directly with Node.js..."
                 nohup node dist/index.js > ~/logs/vendorica-api.log 2>&1 &
@@ -387,19 +386,9 @@ jobs:
             # Check PM2 logs for port information
             echo -e "\nPM2 Application Logs (last 10 lines):"
             
-            # Check PM2 status (prefer Cloudways master user PM2)
-            if sudo test -f /home/master/.bash_aliases && sudo grep -q "pm2" /home/master/.bash_aliases; then
-              echo "✅ PM2: Available (Cloudways master user - optimal for Cloudways)"
-              sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 status'
-              echo -e "\nRecent application logs:"
-              sudo -u master bash -c 'source /home/master/.bash_aliases && pm2 logs vendorica-api --lines 5 --nostream' 2>/dev/null || echo "No PM2 logs available"
-            elif sudo which pm2 > /dev/null 2>&1; then
-              echo "✅ PM2: Available (system)"
-              sudo pm2 status
-              echo -e "\nRecent application logs:"
-              sudo pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
-            elif command -v pm2 > /dev/null 2>&1; then
-              echo "✅ PM2: Available (user)"
+            # Check PM2 status (Cloudways setup)
+            if command -v pm2 > /dev/null 2>&1 && [ -d "$HOME/.pm2" ]; then
+              echo "✅ PM2: Available (Cloudways global setup with .pm2 access)"
               pm2 status
               echo -e "\nRecent application logs:"
               pm2 logs vendorica-api --lines 5 --nostream 2>/dev/null || echo "No PM2 logs available"
@@ -414,6 +403,8 @@ jobs:
                 else
                   echo "❌ Application not running"
                 fi
+              else
+                echo "❌ No application process found"
               fi
             fi
             
