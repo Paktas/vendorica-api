@@ -27,8 +27,9 @@ Modern ES Modules-based Node.js API backend for the Vendorica vendor risk manage
 - **Environment Files**: All configuration from .env files only
 - **Port Handling**: 
   - Development: PORT=3010 in .env.development (custom port for local dev)
-  - Production: No PORT variable (Apache reverse proxy on standard ports 80/443)
-  - Fallback: Framework defaults if PORT missing
+  - Production: PORT=3000 (default) - Apache proxies from 80/443 to localhost:3000
+  - Fallback: Express defaults to 3000 if PORT not specified
+- **Apache Proxy**: .htaccess file routes all requests to Node.js on port 3000
 
 ### 5. Path Aliases
 Clean imports using TypeScript path mapping:

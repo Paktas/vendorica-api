@@ -6,8 +6,8 @@ dotenv.config({ path: '.env.development' })
 // import { config, validateEnvironment, isDevelopment } from '@/config/environment.js'
 import app from './app.js'
 
-// Get port from environment
-const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3010
+// Get port from environment (default 3000 for production/Cloudways compatibility)
+const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000
 
 // Start server
 const server = app.listen(PORT, () => {

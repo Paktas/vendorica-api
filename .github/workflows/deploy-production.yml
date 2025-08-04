@@ -183,6 +183,19 @@ jobs:
               echo "❌ Git clone failed"
               exit 1
             fi
+            
+            # Create .htaccess for Apache proxy to Node.js
+            echo "Creating .htaccess for Apache routing..."
+            cat > .htaccess << 'EOF'
+# Route all requests to Node.js application on port 3000
+RewriteEngine On
+
+# Exclude Let's Encrypt challenge paths
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+# Proxy all requests to localhost:3000
+RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+EOF
+            echo "✅ Created .htaccess file"
 
       - name: 📦 Install Dependencies and PM2
         uses: appleboy/ssh-action@v1.2.2

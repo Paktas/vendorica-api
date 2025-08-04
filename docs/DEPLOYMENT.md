@@ -175,6 +175,8 @@ API_DESCRIPTION=Enterprise vendor risk management platform API
 1. **Contact Cloudways Support**
    - Open a support ticket requesting PM2 installation
    - Ask them to run: `sudo npm install --location=global pm2@latest`
+   - **Important**: PM2 should be installed globally on the root user, NOT on the "master" user
+   - The master user is for server management, not application processes
    - This is the ONLY supported method for Cloudways
    - Usually completed within 24 hours
 
@@ -220,7 +222,32 @@ export default {
 }
 ```
 
-### 5. First Deployment
+### 5. Apache Configuration (.htaccess)
+
+**Create .htaccess file for Node.js routing**:
+
+The deployment workflow automatically creates this file, but you can also create it manually:
+
+```apache
+# .htaccess in public_html directory
+RewriteEngine On
+
+# Route all requests to Node.js application on port 3000
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
+
+# Enable proxy module
+RewriteEngine On
+```
+
+This configuration:
+- Routes all HTTP requests to your Node.js app running on port 3000
+- Maintains SSL termination at Apache level
+- Excludes Let's Encrypt challenge paths for SSL renewal
+
+**Note**: The deployment workflow automatically creates this file during the first deployment.
+
+### 6. First Deployment
 
 **After completing the above setup, perform your first deployment:**
 
@@ -251,18 +278,20 @@ export default {
    pm2 startup
    ```
 
-### 6. Apache Configuration (Automatic)
+### 7. Apache Configuration (Automatic + .htaccess)
 
-**Cloudways automatically configures Apache reverse proxy**:
+**Cloudways automatically provides**:
 
 - ✅ **HTTP to HTTPS redirect** (automatic)
 - ✅ **SSL certificates** (Let's Encrypt auto-renewal)
-- ✅ **Reverse proxy** to Node.js application
-- ✅ **Static file serving** for documentation
+- ✅ **Apache modules** (mod_rewrite, mod_proxy enabled)
 - ✅ **Gzip compression** enabled
 - ✅ **Security headers** configured
 
-**No manual Apache configuration needed** - Cloudways handles all web server setup.
+**You need to provide**:
+
+- ✅ **.htaccess file** for routing to Node.js (created by deployment workflow)
+- ✅ **Port configuration** in your application (default: 3000)
 
 **Deployment Structure**:
 ```
@@ -283,7 +312,7 @@ export default {
 - **API endpoints**: Handled by Node.js, proxied through Apache
 - **Source code**: Remains in `public_html/src/` but not served by Apache
 
-### 7. GitHub Actions CI/CD Setup
+### 8. GitHub Actions CI/CD Setup
 
 **Step 1: Generate SSH Key Pair** (if not already done)
 ```bash
@@ -378,7 +407,7 @@ jobs:
             curl -f https://api.vendorica.com/health || exit 1
 ```
 
-### 8. Monitoring and Maintenance
+### 9. Monitoring and Maintenance
 
 **Cloudways Dashboard**:
 - Server performance metrics
@@ -406,7 +435,7 @@ pm2 monit
 - API Health: `https://api.vendorica.com/health`
 - Documentation: `https://api.vendorica.com/docs`
 
-### 9. Scaling Options
+### 10. Scaling Options
 
 **Vertical Scaling** (Cloudways Dashboard):
 - Increase RAM/CPU as needed
