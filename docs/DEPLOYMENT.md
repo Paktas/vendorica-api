@@ -203,6 +203,8 @@ API_DESCRIPTION=Enterprise vendor risk management platform API
    
    **B. mod_proxy Enablement**
    - Request: "Please enable mod_proxy and mod_proxy_http for Node.js application"
+   - This is enabled at the **server level**, not per application
+   - Once enabled, all applications on the server can use proxy features
    - This is required for Apache to proxy requests to your Node.js app
    - Without this, you'll get 500 errors even if everything else is configured correctly
    
@@ -259,6 +261,7 @@ Before your Node.js application can work on Cloudways, you MUST:
 1. **Contact Cloudways Support** to enable `mod_proxy` on your server
    - Open a support ticket requesting: "Please enable mod_proxy for Node.js application"
    - This is disabled by default on Cloudways servers
+   - mod_proxy is enabled at the **server level** (affects all applications)
    - Support usually enables it within 24 hours
 
 2. **Webroot Configuration**
