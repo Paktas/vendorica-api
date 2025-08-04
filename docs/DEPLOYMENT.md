@@ -168,55 +168,54 @@ API_DESCRIPTION=Enterprise vendor risk management platform API
 
 ### 4. PM2 Process Manager Setup
 
-**Note**: PM2 is NOT installed by default on Cloudways. You need to:
+**IMPORTANT**: PM2 is NOT installed by default on Cloudways. You must contact Cloudways support for installation.
 
-**Option 1 (Recommended)**: Contact Cloudways support
-- Open a support ticket requesting PM2 installation
-- They will install it globally with proper permissions
-- Usually completed within 24 hours
+**Required Steps**:
 
-**Option 2**: Install locally (if permissions allow)
-```bash
-# Install PM2 in your API directory
-cd /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
-npm install pm2
-npx pm2 start ecosystem.config.js
-```
+1. **Contact Cloudways Support**
+   - Open a support ticket requesting PM2 installation
+   - Ask them to run: `sudo npm install --location=global pm2@latest`
+   - This is the ONLY supported method for Cloudways
+   - Usually completed within 24 hours
 
-Create PM2 ecosystem configuration:
+2. **Application PM2 Access Setup** (handled automatically by deployment)
+   - The deployment workflow creates a `.pm2` directory in your app's home directory
+   - Sets proper permissions: `chown -R appuser:www-data ~/.pm2`
+   - This gives your application permission to use the global PM2
+
+3. **Verify PM2 Setup** (after Cloudways installs it)
+   ```bash
+   # SSH into your server
+   ssh {app_id}@your-server-ip
+   
+   # Check PM2 installation
+   pm2 --version    # Should show PM2 version
+   
+   # Check .pm2 directory (created by deployment)
+   ls -la ~/.pm2     # Should show .pm2 directory with proper permissions
+   ```
+
+**Note**: Per Cloudways support guidance, this is the official and only supported way to use PM2 on their platform.
+
+Create PM2 ecosystem configuration (this file is already in the repository):
 
 ```javascript
-// ecosystem.config.js
-module.exports = {
+// ecosystem.config.mjs
+export default {
   apps: [{
     name: 'vendorica-api',
     script: './dist/index.js',
-    cwd: '/home/{account_id}.cloudwaysapps.com/{app_id}/public_html',
-    
-    // Process configuration
-    instances: 2, // Use 2 instances for load balancing
+    instances: 2,
     exec_mode: 'cluster',
-    
-    // Environment
     env: {
       NODE_ENV: 'production'
     },
-    
-    // Logs
-    log_file: './logs/combined.log',
-    out_file: './logs/out.log',
-    error_file: './logs/error.log',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    
-    // Process management
-    autorestart: true,
     watch: false,
+    autorestart: true,
     max_memory_restart: '1G',
-    restart_delay: 4000,
-    
-    // Health monitoring
-    min_uptime: '10s',
-    max_restarts: 10
+    error_file: '~/logs/vendorica-api-err.log',
+    out_file: '~/logs/vendorica-api-out.log',
+    log_file: '~/logs/vendorica-api-combined.log'
   }]
 }
 ```
@@ -247,7 +246,7 @@ module.exports = {
    npm run build
    
    # Start with PM2
-   pm2 start ecosystem.config.js
+   pm2 start ecosystem.config.mjs
    pm2 save
    pm2 startup
    ```
@@ -273,7 +272,7 @@ module.exports = {
 │   ├── index.js            # Node.js entry point
 │   └── ...                 # Compiled application files
 ├── package.json             # Dependencies
-├── ecosystem.config.js      # PM2 configuration
+├── ecosystem.config.mjs     # PM2 configuration
 ├── .env.production          # Environment variables
 └── ...                      # Other project files
 ```
@@ -364,7 +363,7 @@ jobs:
             git pull origin main
             npm ci --only=production
             npm run build
-            pm2 reload ecosystem.config.js --update-env
+            pm2 reload ecosystem.config.mjs --update-env
             pm2 save
             
       - name: Verify deployment
