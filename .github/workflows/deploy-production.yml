@@ -302,9 +302,11 @@ jobs:
               echo "Falling back to direct Node.js execution..."
               if [ -f "dist/index.js" ]; then
                 echo "Starting application directly with Node.js..."
+                # Stop any existing direct process
+                [ -f ~/vendorica-api.pid ] && kill $(cat ~/vendorica-api.pid) 2>/dev/null || true
                 nohup node dist/index.js > ~/logs/vendorica-api.log 2>&1 &
                 echo $! > ~/vendorica-api.pid
-                echo "✅ Application started with PID: $(cat ~/vendorica-api.pid)"
+                echo "✅ Application restarted with PID: $(cat ~/vendorica-api.pid)"
                 echo "⚠️ Application running without PM2 process management"
                 exit 0
               else
@@ -321,29 +323,39 @@ jobs:
               exit 1
             fi
             
-            # Verify ecosystem config exists and test it
+            # Verify ecosystem config exists
             if [ -f "ecosystem.config.mjs" ]; then
               echo "✅ ecosystem.config.mjs found"
               echo "Config file contents:"
               head -5 ecosystem.config.mjs
-              
-              # Try starting with explicit syntax
-              echo "Attempting to start PM2 process..."
-              $PM2_CMD start ecosystem.config.mjs --env production 2>&1 || {
-                echo "❌ PM2 start with .mjs failed, trying alternative approach..."
-                
-                # Alternative: start directly with script path
+            else
+              echo "❌ ecosystem.config.mjs missing"
+              exit 1
+            fi
+            
+            # Smart PM2 deployment strategy
+            echo "Deploying PM2 application..."
+            
+            # Check if vendorica-api is already running
+            if $PM2_CMD list | grep -q "vendorica-api"; then
+              echo "✅ Existing vendorica-api processes found - performing zero-downtime reload"
+              $PM2_CMD reload vendorica-api --update-env
+              echo "✅ PM2 processes reloaded with new code"
+            else
+              echo "🚀 No existing processes found - starting fresh"
+              # Try starting with ecosystem config first
+              if $PM2_CMD start ecosystem.config.mjs --env production 2>&1; then
+                echo "✅ PM2 started with ecosystem.config.mjs"
+              else
+                echo "⚠️ ecosystem.config.mjs failed, trying direct script..."
                 if [ -f "dist/index.js" ]; then
-                  echo "Starting PM2 directly with script path..."
-                  $PM2_CMD start dist/index.js --name vendorica-api --instances 2 --env production 2>&1
+                  $PM2_CMD start dist/index.js --name vendorica-api --instances 2 --env production
+                  echo "✅ PM2 started with direct script"
                 else
                   echo "❌ dist/index.js not found"
                   exit 1
                 fi
-              }
-            else
-              echo "❌ ecosystem.config.mjs missing"
-              exit 1
+              fi
             fi
             
             $PM2_CMD save
