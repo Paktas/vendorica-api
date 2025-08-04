@@ -47,6 +47,22 @@ app.use('/docs', docsRoutes)
 // Internal API routes (for app backend)
 app.use('/internal', routes)
 
+// API root - public landing page
+app.get('/', (req, res) => {
+  res.json({
+    name: "Vendorica API",
+    version: "1.0.0",
+    description: "Enterprise vendor risk management platform API",
+    status: "operational",
+    environment: process.env.NODE_ENV || "development",
+    endpoints: {
+      health: "/health",
+      documentation: "/docs"
+    },
+    timestamp: new Date().toISOString()
+  })
+})
+
 // 404 handler - Express 5.x compatible
 app.use((req, res) => {
   sendNotFound(res, `Endpoint not found: ${req.method} ${req.originalUrl}`)
