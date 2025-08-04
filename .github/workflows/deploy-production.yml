@@ -10,21 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
         
-      - name: 🟢 Setup Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           
-      - name: 📦 Install dependencies and build
+      - name: Install dependencies and build
         run: |
           npm ci
           npm run build
           
-      - name: 🔍 Debug GitHub Secrets
+      - name: Debug GitHub Secrets
         run: |
           echo "=== GITHUB SECRETS DEBUG ==="
           
@@ -74,7 +74,7 @@ jobs:
           USER_VALUE: ${{ secrets.CLOUDWAYS_USER }}
           PORT_VALUE: ${{ secrets.CLOUDWAYS_PORT }}
 
-      - name: 🔐 Test SSH Connection
+      - name: Test SSH Connection
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -88,7 +88,7 @@ jobs:
             echo "User: $(whoami)"
             echo "Server: $(hostname)"
 
-      - name: 🔍 Check Server Environment
+      - name: Check Server Environment
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -126,7 +126,7 @@ jobs:
             echo "npm prefix: $(npm config get prefix)"
             echo "npm global bin: $(npm bin -g 2>/dev/null || echo 'not available')"
 
-      - name: 🧹 Clean Deployment Directory
+      - name: Clean Deployment Directory
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -160,7 +160,7 @@ jobs:
             echo "Directory after cleanup:"
             ls -la
 
-      - name: 📥 Clone Repository
+      - name: Clone Repository
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -179,25 +179,13 @@ jobs:
               [ -f "package.json" ] && echo "✅ package.json" || echo "❌ package.json missing"
               [ -d "src" ] && echo "✅ src/" || echo "❌ src/ missing"
               [ -f "tsconfig.json" ] && echo "✅ tsconfig.json" || echo "❌ tsconfig.json missing"
+              [ -f ".htaccess" ] && echo "✅ .htaccess" || echo "❌ .htaccess missing"
             else
               echo "❌ Git clone failed"
               exit 1
             fi
-            
-            # Create .htaccess for Apache proxy to Node.js
-            echo "Creating .htaccess for Apache routing..."
-            cat > .htaccess << 'EOF'
-# Route all requests to Node.js application on port 3000
-RewriteEngine On
 
-# Exclude Let's Encrypt challenge paths
-RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
-# Proxy all requests to localhost:3000
-RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
-EOF
-            echo "✅ Created .htaccess file"
-
-      - name: 📦 Install Dependencies and PM2
+      - name: Install Dependencies and PM2
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -258,7 +246,7 @@ EOF
               exit 1
             fi
 
-      - name: 🔨 Build Application
+      - name: Build Application
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -283,7 +271,7 @@ EOF
               exit 1
             fi
 
-      - name: ⚙️ Setup PM2 Process
+      - name: Setup PM2 Process
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -361,7 +349,7 @@ EOF
             $PM2_CMD save
             echo "✅ PM2 process configured"
 
-      - name: 🏁 Deployment Summary
+      - name: Deployment Summary
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
