@@ -48,7 +48,11 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
    - Change Webroot to: `/public_html/dist`
    - Save settings
    
-   **Why**: This points Apache to serve from the compiled JavaScript files instead of source code.
+   **Why this is critical**: 
+   - TypeScript source files (`src/`) are not executable by Node.js
+   - The build process compiles TypeScript to JavaScript in `dist/`
+   - Setting webroot to `dist/` ensures Apache only serves compiled production code
+   - Keeps source code, configuration files, and secrets outside the public directory
 
 4. **SSH Access Setup**
    
@@ -265,8 +269,10 @@ Before your Node.js application can work on Cloudways, you MUST:
    - Support usually enables it within 24 hours
 
 2. **Webroot Configuration**
+   - **Why change webroot?** By default, Cloudways serves from `/public_html`, but our compiled JavaScript files are in `/public_html/dist`. Setting webroot to `dist/` ensures Apache serves the production-ready code, not source files.
    - Cloudways webroot should be set to: `/public_html/dist`
    - The `.htaccess` file will be automatically copied to `dist/` during deployment
+   - This separation keeps source code (`src/`) private while only exposing compiled files
 
 **Apache proxy configuration (Cloudways-specific)**:
 
@@ -312,7 +318,26 @@ This configuration:
 
 **After completing the above setup, perform your first deployment:**
 
-**⚠️ Note**: Configure the webroot setting (step 3) AFTER your first successful deployment and build. This ensures the `dist/` directory exists before Apache tries to serve from it.
+**⚠️ Important Notes**: 
+1. Configure the webroot setting (step 3) AFTER your first successful deployment and build. This ensures the `dist/` directory exists before Apache tries to serve from it.
+2. **Create .env.production file** on the server before first deployment:
+   ```bash
+   # SSH to server
+   ssh {app_id}@your-server-ip
+   cd public_html
+   
+   # Create production environment file
+   cat > .env.production << 'EOF'
+   NODE_ENV=production
+   PORT=3000
+   DATABASE_URL=your_production_database_url
+   SUPABASE_URL=https://your-project.supabase.co
+   SUPABASE_ANON_KEY=your_production_anon_key
+   JWT_SECRET=your-super-secure-production-jwt-secret
+   API_BASE_URL=https://api.vendorica.com
+   CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
+   EOF
+   ```
 
 1. **Use GitHub Actions** (recommended):
    - Push code to `main` branch

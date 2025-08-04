@@ -234,8 +234,8 @@ jobs:
               echo "❌ PM2 setup incomplete - check global installation and .pm2 directory"
             fi
             
-            echo "Installing production dependencies..."
-            npm install --omit=dev
+            echo "Installing dependencies (including build tools)..."
+            npm install
             
             # Verify installation
             if [ -d "node_modules" ]; then
