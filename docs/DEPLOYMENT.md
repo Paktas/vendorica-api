@@ -377,63 +377,35 @@ MIIEpAIBAAKCAQEA...
 -----END RSA PRIVATE KEY-----
 ```
 
-Create deployment workflow:
+**Deployment Workflow Structure:**
 
-```yaml
-# .github/workflows/deploy-production.yml
-name: Deploy to Cloudways Production
+The automated deployment workflow consists of 7 focused stages:
 
-on:
-  push:
-    branches: [main]
-  workflow_dispatch: # Manual trigger
+1. **Checkout code** - Get latest repository code
+2. **Setup Node.js** - Prepare build environment  
+3. **Install dependencies and build** - Build application locally
+4. **Debug GitHub Secrets** - Verify deployment credentials
+5. **Test SSH Connection** - Confirm server connectivity
+6. **Check Server Environment** - Verify server prerequisites
+7. **Clean Deployment Directory** - Prepare deployment location
+8. **Clone Repository** - Deploy code to production server
+9. **Install Dependencies and PM2** - Install production dependencies
+10. **Build Application** - Compile TypeScript on production server
+11. **Setup and Verify PM2 Process** - Complete PM2 process management:
+    - Start PM2 cluster processes
+    - Verify PM2 status and logs
+    - Check environment configuration
+    - Verify network port binding
+12. **Deployment Summary** - High-level completion confirmation
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-          cache: 'npm'
-          
-      - name: Install dependencies and build
-        run: |
-          npm ci
-          npm run build
-          
-      - name: Deploy to Cloudways
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.CLOUDWAYS_HOST }}
-          username: ${{ secrets.CLOUDWAYS_USER }}
-          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          port: ${{ secrets.CLOUDWAYS_PORT }}
-          script: |
-            # SSH logs directly into public_html, so we're already in the right place
-            pwd  # Verify: /home/{account_id}.cloudwaysapps.com/{app_id}/public_html
-            git pull origin main
-            npm ci --only=production
-            npm run build
-            pm2 reload ecosystem.config.mjs --update-env
-            pm2 save
-            
-      - name: Verify deployment
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.CLOUDWAYS_HOST }}
-          username: ${{ secrets.CLOUDWAYS_USER }}
-          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          port: ${{ secrets.CLOUDWAYS_PORT }}
-          script: |
-            pm2 status
-            curl -f https://api.vendorica.com/health || exit 1
-```
+**Key Features:**
+- **Comprehensive PM2 Management**: Single stage handles all PM2 operations (start, verify, logs, environment, network)
+- **Fallback Support**: Automatic fallback to direct Node.js execution if PM2 unavailable
+- **Environment Preservation**: Maintains `.env.production` and `.env.local` files during deployment
+- **Clean Directory Management**: Safe cleanup and repository cloning
+- **Immediate Verification**: Real-time PM2 status and application health checks
+
+The workflow is already configured in `.github/workflows/deploy-production.yml` and runs automatically on pushes to the `main` branch.
 
 ### 9. Monitoring and Maintenance
 
