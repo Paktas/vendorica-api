@@ -266,6 +266,11 @@ jobs:
               echo "Key files:"
               [ -f "dist/index.js" ] && echo "✅ dist/index.js" || echo "❌ dist/index.js missing"
               [ -f "dist/app.js" ] && echo "✅ dist/app.js" || echo "⚠️ dist/app.js not required"
+              
+              # Copy .htaccess to dist/ for Cloudways webroot configuration
+              echo "Copying .htaccess to dist/ directory (Cloudways webroot)..."
+              cp .htaccess dist/
+              echo "✅ .htaccess copied to dist/"
             else
               echo "❌ Build failed - dist directory not found"
               exit 1

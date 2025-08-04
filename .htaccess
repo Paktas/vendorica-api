@@ -1,19 +1,17 @@
-# Vendorica API - Apache Proxy Configuration
+# Vendorica API - Cloudways Node.js Configuration
 # Routes all requests to Node.js application on port 3000
 
+# Disable DirectoryIndex (required for Cloudways Node.js apps)
+DirectoryIndex disabled
+
+# Enable URL rewriting
 RewriteEngine On
+RewriteBase /
 
 # Exclude Let's Encrypt challenge paths for SSL renewal
 RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
 
-# Exclude health check endpoint from logging (optional)
-# RewriteCond %{REQUEST_URI} !^/health$
+# Proxy all requests to Node.js application on port 3000
+RewriteRule ^(.*)?$ http://127.0.0.1:3000/$1 [P,L]
 
-# Proxy all requests to Node.js application
-RewriteRule ^(.*)$ http://localhost:3000/$1 [P,L]
-
-# Additional headers for proxied requests
-<IfModule mod_headers.c>
-    RequestHeader set X-Forwarded-Proto "https"
-    RequestHeader set X-Forwarded-Port "443"
-</IfModule>
+# Note: mod_proxy must be enabled by Cloudways support
