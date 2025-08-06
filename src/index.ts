@@ -1,37 +1,23 @@
 import dotenv from 'dotenv'
-import { existsSync } from 'fs'
 
-// Debug environment loading
-console.log('\n🔍 Environment Loading Debug:')
-console.log(`- Initial NODE_ENV: ${process.env.NODE_ENV || 'undefined'}`)
-console.log(`- Current working directory: ${process.cwd()}`)
+// Clean environment loading based on NODE_ENV
+const environment = process.env.NODE_ENV || 'development'
+console.log(`🔧 Loading ${environment} environment`)
 
-// Force production mode detection - check if we're on production server
-const isProductionServer = process.cwd().includes('cloudwaysapps.com')
-const hasProductionEnvFile = existsSync('.env.production')
-
-if (isProductionServer && hasProductionEnvFile && !process.env.NODE_ENV) {
-  console.log('🎯 Production server detected - forcing NODE_ENV=production')
-  process.env.NODE_ENV = 'production'
-}
-
-// Load environment variables based on NODE_ENV
-// Note: dotenv won't override existing env vars unless we use override: true
-if (process.env.NODE_ENV === 'production') {
-  const result = dotenv.config({ path: '.env.production', override: true })
+// Load appropriate environment file
+if (environment === 'production') {
+  const result = dotenv.config({ path: '.env.production' })
   if (result.error) {
     console.error('❌ Error loading .env.production:', result.error.message)
   } else {
-    console.log('✅ Loaded production environment from .env.production')
-    console.log(`- Final NODE_ENV: ${process.env.NODE_ENV}`)
+    console.log('✅ Production environment loaded')
   }
 } else {
   const result = dotenv.config({ path: '.env.development' })
   if (result.error) {
     console.error('❌ Error loading .env.development:', result.error.message)
   } else {
-    console.log('✅ Loaded development environment from .env.development') 
-    console.log(`- Final NODE_ENV: ${process.env.NODE_ENV || 'still undefined'}`)
+    console.log('✅ Development environment loaded')
   }
 }
 

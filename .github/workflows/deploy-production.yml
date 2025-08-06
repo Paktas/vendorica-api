@@ -336,22 +336,19 @@ jobs:
               echo "✅ PM2 processes reloaded with new code"
             else
               echo "🚀 No existing processes found - starting fresh"
-              # Try starting with ecosystem config first
-              if $PM2_CMD start ecosystem.config.mjs 2>&1; then
-                echo "✅ PM2 started with ecosystem.config.mjs"
+              # Start with NODE_ENV=production (the working method)
+              if [ -f "dist/index.js" ]; then
+                NODE_ENV=production $PM2_CMD start dist/index.js --name vendorica-api --instances 2
+                echo "✅ PM2 started with NODE_ENV=production"
               else
-                echo "⚠️ ecosystem.config.mjs failed, trying direct script..."
-                if [ -f "dist/index.js" ]; then
-                  $PM2_CMD start dist/index.js --name vendorica-api --instances 2 --env production
-                  echo "✅ PM2 started with direct script"
-                else
-                  echo "❌ dist/index.js not found"
-                  exit 1
-                fi
+                echo "❌ dist/index.js not found"
+                exit 1
               fi
             fi
             
+            # Save PM2 configuration and enable startup (Cloudways best practice)
             $PM2_CMD save
+            $PM2_CMD startup || echo "⚠️ PM2 startup may require manual setup"
             
             # Immediate PM2 verification
             echo -e "\n=== PM2 STATUS VERIFICATION ==="
