@@ -317,12 +317,12 @@ jobs:
             fi
             
             # Verify ecosystem config exists
-            if [ -f "ecosystem.config.mjs" ]; then
-              echo "✅ ecosystem.config.mjs found"
+            if [ -f "ecosystem.config.js" ]; then
+              echo "✅ ecosystem.config.js found"
               echo "Config file contents:"
-              head -5 ecosystem.config.mjs
+              head -5 ecosystem.config.js
             else
-              echo "❌ ecosystem.config.mjs missing"
+              echo "❌ ecosystem.config.js missing"
               exit 1
             fi
             
@@ -337,10 +337,10 @@ jobs:
             else
               echo "🚀 No existing processes found - starting fresh"
               # Try starting with ecosystem config first
-              if $PM2_CMD start ecosystem.config.mjs --env production 2>&1; then
-                echo "✅ PM2 started with ecosystem.config.mjs"
+              if $PM2_CMD start ecosystem.config.js --env production 2>&1; then
+                echo "✅ PM2 started with ecosystem.config.js"
               else
-                echo "⚠️ ecosystem.config.mjs failed, trying direct script..."
+                echo "⚠️ ecosystem.config.js failed, trying direct script..."
                 if [ -f "dist/index.js" ]; then
                   $PM2_CMD start dist/index.js --name vendorica-api --instances 2 --env production
                   echo "✅ PM2 started with direct script"
