@@ -1,7 +1,15 @@
 import dotenv from 'dotenv'
 
-// Load environment variables FIRST
-dotenv.config({ path: '.env.development' })
+// Load environment variables based on NODE_ENV
+// PM2 sets NODE_ENV before this runs, so we can use it to determine which env file to load
+// Note: dotenv won't override existing env vars unless we use override: true
+if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: '.env.production', override: true })
+  console.log('🔧 Loaded production environment from .env.production')
+} else {
+  dotenv.config({ path: '.env.development' })
+  console.log('🔧 Loaded development environment from .env.development')
+}
 
 // import { config, validateEnvironment, isDevelopment } from '@/config/environment.js'
 import app from './app.js'
@@ -17,7 +25,9 @@ const server = app.listen(PORT, () => {
   console.log(`🔒 Internal API: http://localhost:${PORT}/internal/*`)
   console.log(`🚀 Public API (coming soon): http://localhost:${PORT}/v1/*`)
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log('⚡ Development mode enabled')
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('⚡ Development mode enabled')
+  }
 })
 
 // Graceful shutdown
