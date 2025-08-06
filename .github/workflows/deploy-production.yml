@@ -152,13 +152,9 @@ jobs:
             echo "Cleaning directory completely..."
             rm -rf * .[^.]* 2>/dev/null || true
             
-            # Move environment files back after cleanup
-            echo "Moving environment files back..."
-            [ -f "~/.env.production.deploy" ] && mv ~/.env.production.deploy .env.production && echo "✅ Restored .env.production"
-            [ -f "~/.env.local.deploy" ] && mv ~/.env.local.deploy .env.local && echo "✅ Restored .env.local"
-            
             echo "Directory after cleanup:"
             ls -la
+            echo "Environment files saved in home directory for restoration after clone"
 
       - name: Clone Repository
         uses: appleboy/ssh-action@v1.2.2
@@ -183,6 +179,22 @@ jobs:
             else
               echo "❌ Git clone failed"
               exit 1
+            fi
+            
+            # Restore environment files from home directory
+            echo "Restoring environment files..."
+            if [ -f "$HOME/.env.production.deploy" ]; then
+              mv "$HOME/.env.production.deploy" .env.production
+              echo "✅ Restored .env.production"
+              echo "Environment file contents:"
+              grep -E "^(NODE_ENV|PORT|API_BASE_URL)" .env.production || echo "Basic env vars not shown"
+            else
+              echo "⚠️ No .env.production.deploy found in home directory"
+            fi
+            
+            if [ -f "$HOME/.env.local.deploy" ]; then
+              mv "$HOME/.env.local.deploy" .env.local
+              echo "✅ Restored .env.local"
             fi
 
       - name: Install Dependencies and PM2
