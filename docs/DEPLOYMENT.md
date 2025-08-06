@@ -152,9 +152,10 @@ PORT=3010
 DATABASE_URL=postgresql://localhost:5432/vendorica_dev
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_anon_key
-API_BASE_URL=http://localhost:3010
 CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+FRONTEND_URL=http://localhost:5173
 JWT_SECRET=your-development-jwt-secret
+RESEND_API_KEY=your_resend_api_key
 ```
 
 **Production Environment (via GitHub Secrets)**:
@@ -399,11 +400,11 @@ DATABASE_URL=postgresql://user:pass@host:5432/vendorica_prod
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_production_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-API_BASE_URL=https://api.vendorica.com
 CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
+FRONTEND_URL=https://app.vendorica.com
 JWT_SECRET=your-super-secure-production-jwt-secret
 JWT_EXPIRES_IN=7d
-EMAIL_SERVICE_API_KEY=your_email_service_key
+RESEND_API_KEY=your_resend_api_key
 EMAIL_FROM=noreply@vendorica.com
 API_TITLE=Vendorica API
 API_VERSION=1.0.0

@@ -83,7 +83,7 @@ export class HealthService {
 
     // Check email service (Resend API)
     try {
-      const resendApiKey = process.env.VITE_RESEND_API_KEY
+      const resendApiKey = process.env.RESEND_API_KEY
       if (resendApiKey) {
         // Basic check - if API key exists, assume service is available
         // Could be enhanced with actual API ping if needed

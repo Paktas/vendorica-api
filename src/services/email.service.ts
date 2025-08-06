@@ -12,9 +12,9 @@ export class EmailService {
    */
   private static getResendClient(): Resend {
     if (!this.resend) {
-      const apiKey = process.env.VITE_RESEND_API_KEY
+      const apiKey = process.env.RESEND_API_KEY
       if (!apiKey) {
-        throw new Error('VITE_RESEND_API_KEY environment variable is required')
+        throw new Error('RESEND_API_KEY environment variable is required')
       }
       this.resend = new Resend(apiKey)
     }
