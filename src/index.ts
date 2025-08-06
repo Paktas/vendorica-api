@@ -1,4 +1,5 @@
 import dotenv from 'dotenv'
+import { existsSync } from 'fs'
 
 // Debug environment loading
 console.log('\n🔍 Environment Loading Debug:')
@@ -7,7 +8,7 @@ console.log(`- Current working directory: ${process.cwd()}`)
 
 // Force production mode detection - check if we're on production server
 const isProductionServer = process.cwd().includes('cloudwaysapps.com')
-const hasProductionEnvFile = require('fs').existsSync('.env.production')
+const hasProductionEnvFile = existsSync('.env.production')
 
 if (isProductionServer && hasProductionEnvFile && !process.env.NODE_ENV) {
   console.log('🎯 Production server detected - forcing NODE_ENV=production')
