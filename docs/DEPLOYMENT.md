@@ -207,7 +207,43 @@ The production environment is managed through the `ENV_PRODUCTION` GitHub Secret
 
 **Note**: Per Cloudways support guidance, this is the official and only supported way to use PM2 on their platform.
 
-Create PM2 ecosystem configuration (this file is already in the repository):
+### Environment Detection Implementation
+
+The application uses a **clean NODE_ENV-based approach** for environment detection:
+
+```typescript
+// src/index.ts - Environment Loading
+import dotenv from 'dotenv'
+
+// Clean environment loading based on NODE_ENV
+const environment = process.env.NODE_ENV || 'development'
+console.log(`🔧 Loading ${environment} environment`)
+
+// Load appropriate environment file
+if (environment === 'production') {
+  const result = dotenv.config({ path: '.env.production' })
+  if (result.error) {
+    console.error('❌ Error loading .env.production:', result.error.message)
+  } else {
+    console.log('✅ Production environment loaded')
+  }
+} else {
+  const result = dotenv.config({ path: '.env.development' })
+  if (result.error) {
+    console.error('❌ Error loading .env.development:', result.error.message)
+  } else {
+    console.log('✅ Development environment loaded')
+  }
+}
+```
+
+**Key Benefits:**
+- **Standard approach**: Uses industry-standard NODE_ENV environment variable
+- **Clean implementation**: No server-specific detection or hacks needed  
+- **Development compatibility**: Works seamlessly in local development
+- **Production reliability**: Correctly detects production environment via PM2
+
+**PM2 Configuration** (ecosystem.config.mjs - already in repository):
 
 ```javascript
 // ecosystem.config.mjs
@@ -217,18 +253,28 @@ export default {
     script: './dist/index.js',
     instances: 2,
     exec_mode: 'cluster',
-    env: {
-      NODE_ENV: 'production'
-    },
     watch: false,
     autorestart: true,
     max_memory_restart: '1G',
-    error_file: '~/logs/vendorica-api-err.log',
-    out_file: '~/logs/vendorica-api-out.log',
-    log_file: '~/logs/vendorica-api-combined.log'
+    error_file: './logs/vendorica-api-err.log',
+    out_file: './logs/vendorica-api-out.log',
+    log_file: './logs/vendorica-api-combined.log',
+    time: true
   }]
 }
 ```
+
+**Production Deployment Command:**
+The deployment workflow uses the correct command to ensure NODE_ENV is set:
+```bash
+NODE_ENV=production pm2 start dist/index.js --name vendorica-api --instances 2
+```
+
+This approach ensures:
+- ✅ NODE_ENV is properly set to "production"
+- ✅ Application loads `.env.production` file
+- ✅ PM2 logs show "production" environment  
+- ✅ API endpoints return `"environment":"production"`
 
 ### 5. Apache Configuration (.htaccess)
 
