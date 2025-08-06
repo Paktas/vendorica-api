@@ -3,10 +3,10 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Cloudways Application Setup](#1-cloudways-application-setup)
-3. [SSH & Security Setup](#2-ssh--security-setup)
-4. [Environment & Configuration](#3-environment--configuration)
-5. [Server Requirements (Contact Cloudways Support)](#4-server-requirements-contact-cloudways-support)
+2. [Server Requirements (Contact Cloudways Support)](#1-server-requirements-contact-cloudways-support)
+3. [Cloudways Application Setup](#2-cloudways-application-setup)
+4. [SSH & Security Setup](#3-ssh--security-setup)
+5. [Environment & Configuration](#4-environment--configuration)
 6. [GitHub Actions CI/CD Setup](#5-github-actions-cicd-setup)
 7. [Deployment Process](#6-deployment-process)
 8. [Monitoring & Troubleshooting](#7-monitoring--troubleshooting)
@@ -41,133 +41,7 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
 
 ---
 
-## 1. Cloudways Application Setup
-
-### Create Application & Domain
-1. **Create Node.js Application**
-   - Login to Cloudways dashboard
-   - Create new application: **Node.js**
-   - Choose server size (1GB RAM minimum, 2GB recommended)
-   - Select cloud provider (DigitalOcean, AWS, Google Cloud)
-
-2. **Domain Configuration**
-   - Add your domain (e.g., `api.vendorica.com`) in Cloudways
-   - Point domain DNS to Cloudways server IP
-   - Enable SSL certificate (Let's Encrypt - automatic)
-
-### Configure Webroot (Critical)
-⚠️ **IMPORTANT**: Configure webroot AFTER first successful deployment
-- In Cloudways: Application → Application Settings → Webroot
-- Change from `/public_html` to `/public_html/dist`
-- **Why**: TypeScript compiles to `dist/`, Apache must serve compiled code, not source
-- **Security**: Keeps source code (`src/`) and secrets outside public directory
-
----
-
-## 2. SSH & Security Setup
-
-### Generate SSH Key Pair
-**Run locally on your development machine:**
-```bash
-# Generate SSH key pair with specific filename
-ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api" -f ~/.ssh/vendorica_api_deploy_key
-
-# When prompted - use NO passphrase for CI/CD automation:
-# - Enter file: ~/.ssh/vendorica_api_deploy_key
-# - Enter passphrase: [PRESS ENTER]
-# - Confirm passphrase: [PRESS ENTER]
-
-# Creates two files:
-# - ~/.ssh/vendorica_api_deploy_key (private key - NEVER share)
-# - ~/.ssh/vendorica_api_deploy_key.pub (public key - safe to share)
-```
-
-### Security Configuration
-**Add private key to `.gitignore`:**
-```bash
-echo "*.pem" >> .gitignore
-echo "*_key" >> .gitignore  
-echo "vendorica_api_deploy_key*" >> .gitignore
-```
-
-### Add Public Key to Cloudways
-1. Copy public key: `cat ~/.ssh/vendorica_api_deploy_key.pub`
-2. In Cloudways: Application Access → Add SSH Key
-3. Paste the public key content and save
-
-### Server Information
-**Find your deployment details:**
-- **Account ID**: Found in Cloudways URL (e.g., `1462634`)
-- **App ID**: SSH username in Application Access (e.g., `jwnbrgtuur`)
-- **WebRoot**: `/home/{account_id}.cloudwaysapps.com/{app_id}/public_html`
-- **Server IP**: Your Cloudways server IP address
-- **SSH Port**: Usually 22 (check server settings)
-
----
-
-## 3. Environment & Configuration
-
-### Environment Detection Implementation
-The application uses a **clean NODE_ENV-based approach** for environment detection:
-
-```typescript
-// src/index.ts - Environment Loading
-import dotenv from 'dotenv'
-
-// Clean environment loading based on NODE_ENV
-const environment = process.env.NODE_ENV || 'development'
-console.log(`🔧 Loading ${environment} environment`)
-
-// Load appropriate environment file
-if (environment === 'production') {
-  const result = dotenv.config({ path: '.env.production' })
-  if (result.error) {
-    console.error('❌ Error loading .env.production:', result.error.message)
-  } else {
-    console.log('✅ Production environment loaded')
-  }
-} else {
-  const result = dotenv.config({ path: '.env.development' })
-  if (result.error) {
-    console.error('❌ Error loading .env.development:', result.error.message)
-  } else {
-    console.log('✅ Development environment loaded')
-  }
-}
-```
-
-**Key Benefits:**
-- ✅ Standard NODE_ENV approach (industry standard)
-- ✅ Clean implementation (no server-specific hacks)
-- ✅ Development compatibility (works seamlessly locally)
-- ✅ Production reliability (correctly detects via PM2)
-
-### Local Development Setup
-1. Copy `.env.example` to `.env.development`
-2. Configure your development values:
-
-```env
-NODE_ENV=development
-PORT=3010
-DATABASE_URL=postgresql://localhost:5432/vendorica_dev
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_anon_key
-CORS_ORIGINS=http://localhost:3000,http://localhost:3001
-FRONTEND_URL=http://localhost:5173
-JWT_SECRET=your-development-jwt-secret
-RESEND_API_KEY=your_resend_api_key
-```
-
-### Production Environment Management
-**Secure & Automated**:
-- Production environment variables managed through GitHub Secrets
-- `.env.production` file automatically created during deployment
-- Environment variables never exposed in repository
-- No manual file creation needed
-
----
-
-## 4. Server Requirements (Contact Cloudways Support)
+## 1. Server Requirements (Contact Cloudways Support)
 
 **CRITICAL**: Contact Cloudways support to enable these requirements before deployment:
 
@@ -227,6 +101,132 @@ RewriteRule ^(.*)?$ http://127.0.0.1:3000/$1 [P,L]
 - ✅ SSL certificates (Let's Encrypt auto-renewal)
 - ✅ Gzip compression
 - ✅ Security headers
+
+---
+
+## 2. Cloudways Application Setup
+
+### Create Application & Domain
+1. **Create Node.js Application**
+   - Login to Cloudways dashboard
+   - Create new application: **Node.js**
+   - Choose server size (1GB RAM minimum, 2GB recommended)
+   - Select cloud provider (DigitalOcean, AWS, Google Cloud)
+
+2. **Domain Configuration**
+   - Add your domain (e.g., `api.vendorica.com`) in Cloudways
+   - Point domain DNS to Cloudways server IP
+   - Enable SSL certificate (Let's Encrypt - automatic)
+
+### Configure Webroot (Critical)
+⚠️ **IMPORTANT**: Configure webroot AFTER first successful deployment
+- In Cloudways: Application → Application Settings → Webroot
+- Change from `/public_html` to `/public_html/dist`
+- **Why**: TypeScript compiles to `dist/`, Apache must serve compiled code, not source
+- **Security**: Keeps source code (`src/`) and secrets outside public directory
+
+---
+
+## 3. SSH & Security Setup
+
+### Generate SSH Key Pair
+**Run locally on your development machine:**
+```bash
+# Generate SSH key pair with specific filename
+ssh-keygen -t rsa -b 4096 -C "github-actions@vendorica-api" -f ~/.ssh/vendorica_api_deploy_key
+
+# When prompted - use NO passphrase for CI/CD automation:
+# - Enter file: ~/.ssh/vendorica_api_deploy_key
+# - Enter passphrase: [PRESS ENTER]
+# - Confirm passphrase: [PRESS ENTER]
+
+# Creates two files:
+# - ~/.ssh/vendorica_api_deploy_key (private key - NEVER share)
+# - ~/.ssh/vendorica_api_deploy_key.pub (public key - safe to share)
+```
+
+### Security Configuration
+**Add private key to `.gitignore`:**
+```bash
+echo "*.pem" >> .gitignore
+echo "*_key" >> .gitignore  
+echo "vendorica_api_deploy_key*" >> .gitignore
+```
+
+### Add Public Key to Cloudways
+1. Copy public key: `cat ~/.ssh/vendorica_api_deploy_key.pub`
+2. In Cloudways: Application Access → Add SSH Key
+3. Paste the public key content and save
+
+### Server Information
+**Find your deployment details:**
+- **Account ID**: Found in Cloudways URL (e.g., `1462634`)
+- **App ID**: SSH username in Application Access (e.g., `jwnbrgtuur`)
+- **WebRoot**: `/home/{account_id}.cloudwaysapps.com/{app_id}/public_html`
+- **Server IP**: Your Cloudways server IP address
+- **SSH Port**: Usually 22 (check server settings)
+
+---
+
+## 4. Environment & Configuration
+
+### Environment Detection Implementation
+The application uses a **clean NODE_ENV-based approach** for environment detection:
+
+```typescript
+// src/index.ts - Environment Loading
+import dotenv from 'dotenv'
+
+// Clean environment loading based on NODE_ENV
+const environment = process.env.NODE_ENV || 'development'
+console.log(`🔧 Loading ${environment} environment`)
+
+// Load appropriate environment file
+if (environment === 'production') {
+  const result = dotenv.config({ path: '.env.production' })
+  if (result.error) {
+    console.error('❌ Error loading .env.production:', result.error.message)
+  } else {
+    console.log('✅ Production environment loaded')
+  }
+} else {
+  const result = dotenv.config({ path: '.env.development' })
+  if (result.error) {
+    console.error('❌ Error loading .env.development:', result.error.message)
+  } else {
+    console.log('✅ Development environment loaded')
+  }
+}
+```
+
+**Key Benefits:**
+- ✅ Standard NODE_ENV approach (industry standard)
+- ✅ Clean implementation (no server-specific hacks)
+- ✅ Development compatibility (works seamlessly locally)
+- ✅ Production reliability (correctly detects via PM2)
+
+### Local Development Setup
+1. Copy `.env.example` to `.env.development`
+2. Configure your development values:
+
+```env
+NODE_ENV=development
+PORT=3010
+DATABASE_URL=postgresql://localhost:5432/vendorica_dev
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+FRONTEND_URL=http://localhost:5173
+JWT_SECRET=your-development-jwt-secret
+RESEND_API_KEY=your_resend_api_key
+```
+
+### Production Environment Management
+**Secure & Automated**:
+- Production environment variables managed through GitHub Secrets
+- `.env.production` file automatically created during deployment
+- Environment variables never exposed in repository
+- No manual file creation needed
 
 ---
 
