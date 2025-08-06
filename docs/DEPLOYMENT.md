@@ -59,49 +59,6 @@ GitHub → GitHub Actions → Cloudways VPS → Apache (Auto-configured) → PM2
 
 **Timeline**: Both requests typically completed within 24 hours
 
-### PM2 Configuration
-**ecosystem.config.mjs** (already in repository):
-```javascript
-export default {
-  apps: [{
-    name: 'vendorica-api',
-    script: './dist/index.js',
-    instances: 2,
-    exec_mode: 'cluster',
-    watch: false,
-    autorestart: true,
-    max_memory_restart: '1G',
-    error_file: './logs/vendorica-api-err.log',
-    out_file: './logs/vendorica-api-out.log',
-    log_file: './logs/vendorica-api-combined.log',
-    time: true
-  }]
-}
-```
-
-**Production Deployment Command**:
-```bash
-NODE_ENV=production pm2 start dist/index.js --name vendorica-api --instances 2
-```
-
-### Apache Configuration (.htaccess)
-**Automatic deployment** - `.htaccess` file included in repository and copied to `dist/`:
-
-```apache
-# Vendorica API - Cloudways Node.js Configuration
-DirectoryIndex disabled
-RewriteEngine On
-RewriteBase /
-RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
-RewriteRule ^(.*)?$ http://127.0.0.1:3000/$1 [P,L]
-```
-
-**What Cloudways provides automatically**:
-- ✅ HTTP to HTTPS redirect
-- ✅ SSL certificates (Let's Encrypt auto-renewal)
-- ✅ Gzip compression
-- ✅ Security headers
-
 ---
 
 ## 2. Cloudways Application Setup
@@ -124,6 +81,24 @@ RewriteRule ^(.*)?$ http://127.0.0.1:3000/$1 [P,L]
 - Change from `/public_html` to `/public_html/dist`
 - **Why**: TypeScript compiles to `dist/`, Apache must serve compiled code, not source
 - **Security**: Keeps source code (`src/`) and secrets outside public directory
+
+### Apache Configuration (.htaccess)
+**Automatic deployment** - `.htaccess` file included in repository and copied to `dist/`:
+
+```apache
+# Vendorica API - Cloudways Node.js Configuration
+DirectoryIndex disabled
+RewriteEngine On
+RewriteBase /
+RewriteCond %{REQUEST_URI} !^/\.well-known/acme-challenge/
+RewriteRule ^(.*)?$ http://127.0.0.1:3000/$1 [P,L]
+```
+
+**What Cloudways provides automatically**:
+- ✅ HTTP to HTTPS redirect
+- ✅ SSL certificates (Let's Encrypt auto-renewal)
+- ✅ Gzip compression
+- ✅ Security headers
 
 ---
 
@@ -288,6 +263,31 @@ The workflow (`.github/workflows/deploy-production.yml`) includes:
 ---
 
 ## 6. Deployment Process
+
+### PM2 Configuration
+**ecosystem.config.mjs** (already in repository):
+```javascript
+export default {
+  apps: [{
+    name: 'vendorica-api',
+    script: './dist/index.js',
+    instances: 2,
+    exec_mode: 'cluster',
+    watch: false,
+    autorestart: true,
+    max_memory_restart: '1G',
+    error_file: './logs/vendorica-api-err.log',
+    out_file: './logs/vendorica-api-out.log',
+    log_file: './logs/vendorica-api-combined.log',
+    time: true
+  }]
+}
+```
+
+**Production Deployment Command**:
+```bash
+NODE_ENV=production pm2 start dist/index.js --name vendorica-api --instances 2
+```
 
 ### Automated Deployment (Recommended)
 **Push to `main` branch** - GitHub Actions handles everything automatically
