@@ -1,5 +1,20 @@
 # Vendorica API Deployment Guide
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Cloudways Application Setup](#1-cloudways-application-setup)
+3. [SSH & Security Setup](#2-ssh--security-setup)
+4. [Environment & Configuration](#3-environment--configuration)
+5. [Server Requirements (Contact Cloudways Support)](#4-server-requirements-contact-cloudways-support)
+6. [GitHub Actions CI/CD Setup](#5-github-actions-cicd-setup)
+7. [Deployment Process](#6-deployment-process)
+8. [Monitoring & Troubleshooting](#7-monitoring--troubleshooting)
+9. [Development Workflow](#development-workflow)
+10. [Quick Start Checklist](#quick-start-checklist)
+
+---
+
 ## Overview
 
 **Recommended architecture for production deployment using Cloudways managed hosting.**
