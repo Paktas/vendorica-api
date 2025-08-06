@@ -138,25 +138,14 @@ jobs:
             echo "Current directory contents:"
             ls -la
             
-            # Clean directory for fresh deployment, but preserve environment files
-            if [ -d ".git" ]; then
-              echo "Removing existing git repository..."
-              rm -rf .git
-            fi
-            
-            # Move environment files to home directory before cleaning
-            echo "Moving environment files to home directory..."
-            [ -f ".env.production" ] && mv .env.production ~/.env.production.deploy && echo "Moved .env.production to ~/"
-            [ -f ".env.local" ] && mv .env.local ~/.env.local.deploy && echo "Moved .env.local to ~/"
-            
-            echo "Cleaning directory completely..."
+            echo "Cleaning directory completely for fresh deployment..."
             rm -rf * .[^.]* 2>/dev/null || true
             
             echo "Directory after cleanup:"
             ls -la
-            echo "Environment files saved in home directory for restoration after clone"
+            echo "✅ Directory cleaned successfully"
 
-      - name: Clone Repository
+      - name: Clone Repository and Setup Environment
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
@@ -181,29 +170,34 @@ jobs:
               exit 1
             fi
             
-            # Restore environment files from home directory
-            echo "Restoring environment files..."
-            if [ -f "$HOME/.env.production.deploy" ]; then
-              mv "$HOME/.env.production.deploy" .env.production
-              echo "✅ Restored .env.production"
-              echo "Environment file contents:"
-              grep -E "^(NODE_ENV|PORT|API_BASE_URL)" .env.production || echo "Basic env vars not shown"
-            else
-              echo "⚠️ No .env.production.deploy found in home directory"
-            fi
+            echo -e "\n=== Creating Production Environment ==="
+            echo "Creating .env.production file from GitHub secret..."
+            cat > .env.production << 'EOF'
+            ${{ secrets.ENV_PRODUCTION }}
+            EOF
             
-            if [ -f "$HOME/.env.local.deploy" ]; then
-              mv "$HOME/.env.local.deploy" .env.local
-              echo "✅ Restored .env.local"
+            # Verify environment file was created
+            if [ -f ".env.production" ]; then
+              echo "✅ .env.production file created successfully"
+              echo "File size: $(wc -c < .env.production) bytes"
+              echo "Line count: $(wc -l < .env.production) lines"
+              
+              # Show non-sensitive environment variables for verification
+              echo "Environment configuration:"
+              grep -E "^(NODE_ENV|PORT|API_BASE_URL)" .env.production || echo "Basic env vars not found"
+            else
+              echo "❌ Failed to create .env.production file"
+              exit 1
             fi
 
-      - name: Install Dependencies and PM2
+      - name: Install Dependencies, Build, and Setup PM2
         uses: appleboy/ssh-action@v1.2.2
         with:
           host: ${{ secrets.CLOUDWAYS_HOST }}
           username: ${{ secrets.CLOUDWAYS_USER }}
           key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
           port: ${{ secrets.CLOUDWAYS_PORT }}
+          command_timeout: 20m
           script: |
             cd public_html
             
@@ -257,17 +251,8 @@ jobs:
               echo "❌ npm install failed"
               exit 1
             fi
-
-      - name: Build Application
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.CLOUDWAYS_HOST }}
-          username: ${{ secrets.CLOUDWAYS_USER }}
-          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          port: ${{ secrets.CLOUDWAYS_PORT }}
-          script: |
-            cd public_html
             
+            echo -e "\n=== BUILD APPLICATION ==="
             echo "Building application..."
             npm run build
             
@@ -287,17 +272,8 @@ jobs:
               echo "❌ Build failed - dist directory not found"
               exit 1
             fi
-
-      - name: Setup and Verify PM2 Process
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.CLOUDWAYS_HOST }}
-          username: ${{ secrets.CLOUDWAYS_USER }}
-          key: ${{ secrets.CLOUDWAYS_SSH_KEY }}
-          port: ${{ secrets.CLOUDWAYS_PORT }}
-          script: |
-            cd public_html
             
+            echo -e "\n=== SETUP AND VERIFY PM2 PROCESS ==="
             # PM2 process management with fallback options
             echo "Starting PM2 process management..."
             

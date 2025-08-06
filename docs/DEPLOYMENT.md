@@ -322,24 +322,9 @@ This configuration:
 
 **⚠️ Important Notes**: 
 1. Configure the webroot setting (step 3) AFTER your first successful deployment and build. This ensures the `dist/` directory exists before Apache tries to serve from it.
-2. **Create .env.production file** on the server before first deployment:
-   ```bash
-   # SSH to server
-   ssh {app_id}@your-server-ip
-   cd public_html
-   
-   # Create production environment file
-   cat > .env.production << 'EOF'
-   NODE_ENV=production
-   PORT=3000
-   DATABASE_URL=your_production_database_url
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_ANON_KEY=your_production_anon_key
-   JWT_SECRET=your-super-secure-production-jwt-secret
-   API_BASE_URL=https://api.vendorica.com
-   CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
-   EOF
-   ```
+2. **Environment variables are managed through GitHub Secrets** - no manual file creation needed:
+   - The `.env.production` file is automatically created during deployment from the `ENV_PRODUCTION` GitHub secret
+   - This ensures environment variables are secure and version-controlled
 
 1. **Use GitHub Actions** (recommended):
    - Push code to `main` branch
@@ -427,6 +412,26 @@ Create these secrets:
 | `CLOUDWAYS_USER` | `{app_id}` | Your Cloudways application ID |
 | `CLOUDWAYS_SSH_KEY` | `-----BEGIN RSA PRIVATE KEY-----...` | Contents of your private key file |
 | `CLOUDWAYS_PORT` | `22` | SSH port (default is 22, check your server) |
+| `ENV_PRODUCTION` | Complete `.env.production` contents | Production environment variables (see example below) |
+
+**Example `ENV_PRODUCTION` secret value:**
+```
+NODE_ENV=production
+PORT=3000
+DATABASE_URL=postgresql://user:pass@host:5432/vendorica_prod
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_production_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+API_BASE_URL=https://api.vendorica.com
+CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
+JWT_SECRET=your-super-secure-production-jwt-secret
+JWT_EXPIRES_IN=7d
+EMAIL_SERVICE_API_KEY=your_email_service_key
+EMAIL_FROM=noreply@vendorica.com
+API_TITLE=Vendorica API
+API_VERSION=1.0.0
+API_DESCRIPTION=Enterprise vendor risk management platform API
+```
 
 **Important**: For `CLOUDWAYS_SSH_KEY`, copy the ENTIRE private key including the BEGIN and END lines:
 ```
