@@ -135,12 +135,15 @@ ls -la           # Should be empty or contain default files
 
 ### 3. Environment Configuration
 
-**Security**: All `.env.*` files are ignored by git except `.env.example`
+**Production Environment Management**:
+- Production environment variables are managed through GitHub Secrets
+- The `.env.production` file is automatically created during deployment
+- This ensures environment variables are secure and never exposed in the repository
 
-**Setup Process**:
-1. Copy `.env.example` to `.env.development` and `.env.production`
-2. Fill in actual values for your environment
-3. Never commit actual environment files
+**Local Development Setup**:
+1. Copy `.env.example` to `.env.development`
+2. Fill in your development values
+3. Never commit actual environment files (they're in .gitignore)
 
 **Development (.env.development)**:
 ```env
@@ -154,41 +157,11 @@ CORS_ORIGINS=http://localhost:3000,http://localhost:3001
 JWT_SECRET=your-development-jwt-secret
 ```
 
-```bash
-# Copy environment template
-cp .env.example .env.production
+**Production Environment (via GitHub Secrets)**:
 
-# Edit with your production values
-nano .env.production
-```
+The production environment is managed through the `ENV_PRODUCTION` GitHub Secret. During deployment, this secret is used to create the `.env.production` file automatically.
 
-**Production environment variables**:
-```env
-NODE_ENV=production
-
-# Database Configuration
-DATABASE_URL=postgresql://user:pass@host:5432/vendorica_prod
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your_production_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# API Configuration
-API_BASE_URL=https://api.vendorica.com
-CORS_ORIGINS=https://app.vendorica.com,https://vendorica.com
-
-# Security
-JWT_SECRET=your-super-secure-production-jwt-secret
-JWT_EXPIRES_IN=7d
-
-# Email Configuration (optional)
-EMAIL_SERVICE_API_KEY=your_email_service_key
-EMAIL_FROM=noreply@vendorica.com
-
-# API Documentation
-API_TITLE=Vendorica API
-API_VERSION=1.0.0
-API_DESCRIPTION=Enterprise vendor risk management platform API
-```
+**No manual file creation needed** - the deployment workflow handles this automatically.
 
 ### 4. PM2 Process Manager Setup
 
@@ -313,7 +286,7 @@ This configuration:
 - If you get 404 errors: Check that webroot is set to `/public_html/dist` in Cloudways
 - If you get 500 errors: mod_proxy is not enabled - contact Cloudways support
 - The `.htaccess` must be in the webroot directory (`dist/`) to work
-- **If app shows "development" environment**: Create `.env.production` file and restart PM2 with `--env production`
+- **If app shows "development" environment**: Check that `ENV_PRODUCTION` GitHub Secret is properly set and redeploy
 - **If PM2 processes restart repeatedly**: Check `pm2 logs` for import errors, rebuild with `npm run build`
 
 ### 6. First Deployment
@@ -322,9 +295,7 @@ This configuration:
 
 **⚠️ Important Notes**: 
 1. Configure the webroot setting (step 3) AFTER your first successful deployment and build. This ensures the `dist/` directory exists before Apache tries to serve from it.
-2. **Environment variables are managed through GitHub Secrets** - no manual file creation needed:
-   - The `.env.production` file is automatically created during deployment from the `ENV_PRODUCTION` GitHub secret
-   - This ensures environment variables are secure and version-controlled
+2. **Environment variables are fully automated** - the deployment workflow creates `.env.production` from GitHub Secrets
 
 1. **Use GitHub Actions** (recommended):
    - Push code to `main` branch
@@ -375,7 +346,7 @@ This configuration:
 │   └── ...                 # Compiled application files
 ├── package.json             # Dependencies
 ├── ecosystem.config.mjs     # PM2 configuration
-├── .env.production          # Environment variables
+├── .env.production          # Environment variables (created during deployment)
 └── ...                      # Other project files
 ```
 
@@ -414,7 +385,13 @@ Create these secrets:
 | `CLOUDWAYS_PORT` | `22` | SSH port (default is 22, check your server) |
 | `ENV_PRODUCTION` | Complete `.env.production` contents | Production environment variables (see example below) |
 
-**Example `ENV_PRODUCTION` secret value:**
+**Setting up the `ENV_PRODUCTION` secret:**
+
+1. Go to your GitHub repository → Settings → Secrets and variables → Actions
+2. Click "New repository secret"
+3. Name: `ENV_PRODUCTION`
+4. Value: Paste your complete production environment configuration:
+
 ```
 NODE_ENV=production
 PORT=3000
@@ -433,6 +410,8 @@ API_VERSION=1.0.0
 API_DESCRIPTION=Enterprise vendor risk management platform API
 ```
 
+**Important**: Enter the values exactly as shown above, with each variable on a new line. Do not add quotes around the entire content.
+
 **Important**: For `CLOUDWAYS_SSH_KEY`, copy the ENTIRE private key including the BEGIN and END lines:
 ```
 -----BEGIN RSA PRIVATE KEY-----
@@ -444,30 +423,33 @@ MIIEpAIBAAKCAQEA...
 
 **Deployment Workflow Structure:**
 
-The automated deployment workflow consists of 7 focused stages:
+The automated deployment workflow uses optimized SSH connections:
 
-1. **Checkout code** - Get latest repository code
-2. **Setup Node.js** - Prepare build environment  
-3. **Install dependencies and build** - Build application locally
-4. **Debug GitHub Secrets** - Verify deployment credentials
+1. **Checkout code** - Get latest repository code (local)
+2. **Setup Node.js** - Prepare build environment (local)
+3. **Install dependencies and build** - Build application locally (local)
+4. **Debug GitHub Secrets** - Verify deployment credentials (local)
 5. **Test SSH Connection** - Confirm server connectivity
 6. **Check Server Environment** - Verify server prerequisites
-7. **Clean Deployment Directory** - Prepare deployment location
-8. **Clone Repository** - Deploy code to production server
-9. **Install Dependencies and PM2** - Install production dependencies
-10. **Build Application** - Compile TypeScript on production server
-11. **Setup and Verify PM2 Process** - Complete PM2 process management:
-    - Start PM2 cluster processes
-    - Verify PM2 status and logs
-    - Check environment configuration
-    - Verify network port binding
-12. **Deployment Summary** - High-level completion confirmation
+7. **Clean Deployment Directory** - Complete directory wipe for fresh deployment
+8. **Clone Repository and Setup Environment** - Combined step:
+   - Clone repository to production server
+   - Create `.env.production` from GitHub Secret
+   - Verify environment configuration
+9. **Install Dependencies, Build, and Setup PM2** - Combined step:
+   - Install production dependencies
+   - Build TypeScript to JavaScript
+   - Copy .htaccess to dist/
+   - Setup PM2 process management
+   - Verify PM2 status and application health
+10. **Deployment Summary** - Final status confirmation
 
 **Key Features:**
-- **Comprehensive PM2 Management**: Single stage handles all PM2 operations (start, verify, logs, environment, network)
+- **Optimized SSH Connections**: Reduced from 7 to 5 connections by combining related operations
+- **Secure Environment Management**: `.env.production` created from GitHub Secrets during deployment
+- **Comprehensive PM2 Management**: Complete PM2 setup with automatic reload for zero-downtime
 - **Fallback Support**: Automatic fallback to direct Node.js execution if PM2 unavailable
-- **Environment Preservation**: Maintains `.env.production` and `.env.local` files during deployment
-- **Clean Directory Management**: Safe cleanup and repository cloning
+- **Clean Deployment**: Complete directory wipe ensures fresh deployment every time
 - **Immediate Verification**: Real-time PM2 status and application health checks
 
 The workflow is already configured in `.github/workflows/deploy-production.yml` and runs automatically on pushes to the `main` branch.
@@ -561,7 +543,7 @@ See previous version of this file or contact support for manual VPS setup detail
 **Application Won't Start**:
 - Check PM2 status: `pm2 status`
 - View logs: `pm2 logs vendorica-api`
-- Verify environment variables: `cat .env.production`
+- Check deployment logs to verify `.env.production` was created from GitHub Secret
 
 **SSL Certificate Issues**:
 - Cloudways auto-renews Let's Encrypt certificates
