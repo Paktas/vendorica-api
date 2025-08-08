@@ -32,13 +32,32 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
 
-// Health check (simple endpoint)
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
-  })
+// Health check (enhanced public endpoint with dependency checks)
+app.get('/health', async (req, res) => {
+  try {
+    const { HealthService } = await import('@/services/health.service.js')
+    const healthStatus = await HealthService.getHealthStatus()
+    
+    // Add system metrics if there are concerns
+    const systemMetrics = HealthService.getSystemMetrics()
+    if (systemMetrics) {
+      (healthStatus as any).metrics = systemMetrics
+    }
+    
+    // Set appropriate HTTP status code
+    const httpStatus = healthStatus.status === 'healthy' ? 200 :
+                      healthStatus.status === 'degraded' ? 200 : 503
+    
+    res.status(httpStatus).json(healthStatus)
+  } catch (error) {
+    // If health check itself fails, return minimal response
+    console.error('Health check error:', error)
+    res.status(503).json({
+      status: 'unhealthy',
+      timestamp: new Date().toISOString(),
+      message: 'Health check failed'
+    })
+  }
 })
 
 // Documentation routes (at root level)
