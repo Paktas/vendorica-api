@@ -45,4 +45,26 @@ export class HealthController {
       return sendError(res, 'Health check failed', 500)
     }
   }
+
+  /**
+   * Environment diagnostics (development only)
+   * GET /health/diagnostics
+   */
+  static async environmentDiagnostics(req: Request, res: Response, next: NextFunction) {
+    try {
+      if (process.env.NODE_ENV !== 'development') {
+        return sendError(res, 'Diagnostics only available in development mode', 403)
+      }
+
+      const diagnostics = HealthService.getEnvironmentDiagnostics()
+      return res.status(200).json({
+        success: true,
+        diagnostics,
+        message: 'Environment diagnostics generated successfully'
+      })
+    } catch (error) {
+      console.error('Environment diagnostics controller error:', error)
+      return sendError(res, 'Failed to generate diagnostics', 500)
+    }
+  }
 }

@@ -21,7 +21,23 @@ if (environment === 'production') {
   }
 }
 
-// import { config, validateEnvironment, isDevelopment } from '@/config/environment.js'
+// Early validation to catch configuration issues before app starts
+try {
+  const { validateEnvironment } = await import('./config/environment.js')
+  validateEnvironment()
+  // Only log success in production or if there were potential issues
+  if (process.env.NODE_ENV === 'production') {
+    console.log('✅ Environment validation passed')
+  }
+} catch (error) {
+  console.error('\n💥 STARTUP FAILED - Environment Configuration Error:')
+  console.error(error.message)
+  console.error('\n🔧 Please check your environment file and try again.')
+  console.error('🔍 JWT_SECRET loaded:', !!process.env.JWT_SECRET ? '✅ Yes' : '❌ No')
+  process.exit(1)
+}
+
+// IMPORTANT: Import app AFTER environment loading and validation
 import app from './app.js'
 
 // Get port from environment (default 3000 for production/Cloudways compatibility)

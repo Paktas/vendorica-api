@@ -26,6 +26,10 @@ interface HealthStatus {
   }
   version: string
   environment: 'production' | 'development' | 'staging'
+  config?: {
+    missing_env_vars?: string[]
+    loaded_env_file?: string
+  }
 }
 
 export class HealthService {
@@ -67,6 +71,14 @@ export class HealthService {
       },
       version: process.env.npm_package_version || '1.0.0',
       environment: (process.env.NODE_ENV || 'development') as any
+    }
+
+    // Add configuration diagnostics in development
+    if (process.env.NODE_ENV === 'development') {
+      const configCheck = this.checkEnvironmentConfig()
+      if (configCheck.missing_env_vars.length > 0 || configCheck.loaded_env_file) {
+        response.config = configCheck
+      }
     }
     
     // Only include response times if they're concerning (helps with debugging)
@@ -209,6 +221,119 @@ export class HealthService {
     }
     
     return parts.join(' ')
+  }
+
+  /**
+   * Get detailed environment diagnostics (development only)
+   */
+  static getEnvironmentDiagnostics() {
+    if (process.env.NODE_ENV !== 'development') {
+      return { error: 'Environment diagnostics only available in development mode' }
+    }
+
+    const requiredEnvVars = [
+      'DATABASE_URL',
+      'JWT_SECRET', 
+      'SUPABASE_URL',
+      'SUPABASE_ANON_KEY',
+      'RESEND_API_KEY',
+      'EMAIL_FROM'
+    ]
+
+    const diagnostics = {
+      environment: process.env.NODE_ENV || 'development',
+      loaded_env_file: this.getLoadedEnvFile(),
+      required_variables: {},
+      jwt_service_test: this.testJWTService(),
+      dotenv_timing: this.checkDotenvTiming()
+    }
+
+    // Check each required variable with details
+    requiredEnvVars.forEach(varName => {
+      const value = process.env[varName]
+      diagnostics.required_variables[varName] = {
+        present: !!value,
+        length: value ? value.length : 0,
+        starts_with: value ? value.substring(0, 10) + '...' : null,
+        type: typeof value
+      }
+    })
+
+    return diagnostics
+  }
+
+  private static testJWTService() {
+    try {
+      // Test if JWT_SECRET is accessible at runtime
+      const secret = process.env.JWT_SECRET
+      return {
+        secret_accessible: !!secret,
+        secret_length: secret ? secret.length : 0,
+        test_result: 'accessible'
+      }
+    } catch (error) {
+      return {
+        secret_accessible: false,
+        error: error.message,
+        test_result: 'failed'
+      }
+    }
+  }
+
+  private static checkDotenvTiming() {
+    // Check if environment variables were loaded properly
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    const expectedFile = nodeEnv === 'production' ? '.env.production' : '.env.development'
+    
+    return {
+      node_env: nodeEnv,
+      expected_file: expectedFile,
+      dotenv_loaded: !!process.env.JWT_SECRET, // Use JWT_SECRET as canary
+      process_env_count: Object.keys(process.env).length
+    }
+  }
+
+  private static getLoadedEnvFile() {
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    if (nodeEnv === 'production') {
+      return '.env.production'
+    } else if (nodeEnv === 'development') {
+      return '.env.development'
+    } else {
+      return `.env.${nodeEnv}`
+    }
+  }
+
+  /**
+   * Check environment configuration (development only)
+   */
+  private static checkEnvironmentConfig() {
+    const requiredEnvVars = [
+      'DATABASE_URL',
+      'JWT_SECRET', 
+      'SUPABASE_URL',
+      'SUPABASE_ANON_KEY',
+      'RESEND_API_KEY',
+      'EMAIL_FROM'
+    ]
+
+    const missing_env_vars = requiredEnvVars.filter(envVar => !process.env[envVar])
+    
+    // Try to determine which env file was loaded
+    let loaded_env_file = 'unknown'
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    if (nodeEnv === 'production') {
+      loaded_env_file = '.env.production'
+    } else if (nodeEnv === 'development') {
+      loaded_env_file = '.env.development'
+    } else {
+      loaded_env_file = `.env.${nodeEnv}`
+    }
+
+    return {
+      missing_env_vars,
+      loaded_env_file
+    }
   }
 
   /**

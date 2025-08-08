@@ -34,7 +34,7 @@ export const config = {
 }
 
 /**
- * Validate required environment variables
+ * Validate required environment variables with enhanced debugging
  */
 export const validateEnvironment = (): void => {
   const required = [
@@ -46,7 +46,21 @@ export const validateEnvironment = (): void => {
   const missing = required.filter(key => !process.env[key])
   
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`)
+    const nodeEnv = process.env.NODE_ENV || 'development'
+    const envFile = nodeEnv === 'production' ? '.env.production' : '.env.development'
+    const loadedKeys = Object.keys(process.env).filter(k => 
+      required.some(req => k.includes(req.split('_')[0]))
+    )
+    
+    const errorMessage = [
+      `❌ Missing required environment variables: ${missing.join(', ')}`,
+      `🔍 Environment: ${nodeEnv}`,
+      `📁 Expected file: ${envFile}`,
+      `🔑 Loaded related keys: ${loadedKeys.length > 0 ? loadedKeys.join(', ') : 'none'}`,
+      `💡 Tip: Check if dotenv loaded correctly and variables are spelled correctly`
+    ].join('\n')
+    
+    throw new Error(errorMessage)
   }
 }
 

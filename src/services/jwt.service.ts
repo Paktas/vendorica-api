@@ -11,19 +11,30 @@ export interface JwtPayload {
 }
 
 export class JwtService {
-  private static readonly SECRET = config.auth.jwtSecret
-  private static readonly EXPIRES_IN = config.auth.jwtExpiresIn
-
   /**
    * Generate a secure JWT token
    */
   static generateToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-    if (!this.SECRET) {
-      throw new Error('JWT_SECRET environment variable is required')
+    // Read from environment at runtime, not at import time
+    const SECRET = process.env.JWT_SECRET
+    const EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d'
+    
+    if (!SECRET) {
+      // Enhanced error message with debugging context only in development
+      if (process.env.NODE_ENV === 'development') {
+        const envFile = '.env.development'
+        const jwtKeys = Object.keys(process.env).filter(k => k.includes('JWT')).join(', ') || 'none'
+        throw new Error(
+          `JWT_SECRET environment variable is required. Expected in: ${envFile}. ` +
+          `JWT-related keys found: ${jwtKeys}`
+        )
+      } else {
+        throw new Error('JWT_SECRET environment variable is required')
+      }
     }
 
-    return jwt.sign(payload, this.SECRET, {
-      expiresIn: this.EXPIRES_IN,
+    return jwt.sign(payload, SECRET, {
+      expiresIn: EXPIRES_IN,
       issuer: 'vendorica-api',
       audience: 'vendorica-client'
     } as jwt.SignOptions)
@@ -33,12 +44,25 @@ export class JwtService {
    * Verify and decode a JWT token
    */
   static verifyToken(token: string): JwtPayload {
-    if (!this.SECRET) {
-      throw new Error('JWT_SECRET environment variable is required')
+    // Read from environment at runtime, not at import time
+    const SECRET = process.env.JWT_SECRET
+    
+    if (!SECRET) {
+      // Enhanced error message with debugging context only in development
+      if (process.env.NODE_ENV === 'development') {
+        const envFile = '.env.development'
+        const jwtKeys = Object.keys(process.env).filter(k => k.includes('JWT')).join(', ') || 'none'
+        throw new Error(
+          `JWT_SECRET environment variable is required for token verification. Expected in: ${envFile}. ` +
+          `JWT-related keys found: ${jwtKeys}`
+        )
+      } else {
+        throw new Error('JWT_SECRET environment variable is required')
+      }
     }
 
     try {
-      const decoded = jwt.verify(token, this.SECRET, {
+      const decoded = jwt.verify(token, SECRET, {
         issuer: 'vendorica-api',
         audience: 'vendorica-client'
       }) as JwtPayload

@@ -52,4 +52,34 @@ const router = Router()
  */
 router.get('/detailed', HealthController.detailedHealthCheck)
 
+/**
+ * @swagger
+ * /health/diagnostics:
+ *   get:
+ *     summary: Environment diagnostics (development only)
+ *     description: Detailed environment configuration diagnostics for debugging
+ *     tags: [Health]
+ *     responses:
+ *       200:
+ *         description: Environment diagnostics
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 diagnostics:
+ *                   type: object
+ *                 message:
+ *                   type: string
+ *       403:
+ *         description: Only available in development mode
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ApiErrorResponse'
+ */
+router.get('/diagnostics', HealthController.environmentDiagnostics)
+
 export default router
