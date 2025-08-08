@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express'
 import { HealthService } from '@services/health.service.js'
-import { sendSuccess, sendError } from '@/utils/response.util.js'
+import { sendError } from '@/utils/response.util.js'
 
 export class HealthController {
   /**
@@ -9,8 +9,12 @@ export class HealthController {
    */
   static async simpleHealthCheck(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = HealthService.getSimpleStatus()
-      return res.status(200).json(result)
+      // Simple health check - just return basic status
+      return res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        message: 'Vendorica API is operational'
+      })
     } catch (error) {
       console.error('Health check controller error:', error)
       return sendError(res, 'Health check failed', 500)
@@ -23,17 +27,19 @@ export class HealthController {
    */
   static async detailedHealthCheck(req: Request, res: Response, next: NextFunction) {
     try {
-      const result = await HealthService.getHealthStatus()
-
-      if (!result.success) {
-        return sendError(res, result.error, 503)
+      const healthStatus = await HealthService.getHealthStatus()
+      
+      // Add system metrics if there are concerns
+      const systemMetrics = HealthService.getSystemMetrics()
+      if (systemMetrics) {
+        (healthStatus as any).metrics = systemMetrics
       }
 
       // Return appropriate status code based on health
-      const statusCode = result.data?.status === 'healthy' ? 200 : 
-                        result.data?.status === 'degraded' ? 200 : 503
+      const statusCode = healthStatus.status === 'healthy' ? 200 : 
+                        healthStatus.status === 'degraded' ? 200 : 503
 
-      return res.status(statusCode).json(result)
+      return res.status(statusCode).json(healthStatus)
     } catch (error) {
       console.error('Detailed health check controller error:', error)
       return sendError(res, 'Health check failed', 500)
