@@ -458,7 +458,10 @@ export class AuthService {
 
         if (!emailResult.success) {
           console.error('Failed to send reset email:', emailResult.error)
-          // Don't fail the request if email fails - token is still valid
+          return {
+            success: false,
+            error: 'Failed to send password reset email'
+          }
         }
 
         // Add audit log
@@ -475,7 +478,10 @@ export class AuthService {
 
       } catch (emailError) {
         console.error('Email sending failed:', emailError)
-        // Don't fail the request if email fails
+        return {
+          success: false,
+          error: 'Failed to send password reset email'
+        }
       }
 
       return {

@@ -26,7 +26,7 @@ export class EmailService {
    */
   private static loadTemplate(templateName: string): HandlebarsTemplateDelegate {
     try {
-      const templatePath = join(process.cwd(), 'src/server/services/email/templates', `${templateName}.handlebars`)
+      const templatePath = join(process.cwd(), 'src/services/email/templates', `${templateName}.handlebars`)
       const templateContent = readFileSync(templatePath, 'utf-8')
       return Handlebars.compile(templateContent)
     } catch (error) {
