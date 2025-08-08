@@ -37,9 +37,12 @@ export class AuthController {
       })
     } catch (error) {
       // Enhanced error logging with context for debugging
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      const errorStack = error instanceof Error ? error.stack : undefined
+      
       const errorDetails = {
-        message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        message: errorMessage,
+        stack: process.env.NODE_ENV === 'development' ? errorStack : undefined,
         email: req.body?.email ? 'provided' : 'missing',
         timestamp: new Date().toISOString(),
         requestId: req.headers['x-request-id'] || 'none'
@@ -48,7 +51,7 @@ export class AuthController {
       console.error('Login controller error:', errorDetails)
       
       // Check for specific JWT errors to provide better user feedback
-      if (error.message?.includes('JWT_SECRET')) {
+      if (errorMessage?.includes('JWT_SECRET')) {
         console.error('🔥 CRITICAL: JWT configuration error detected')
         return sendError(res, 'Authentication service temporarily unavailable', 503)
       }

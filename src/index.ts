@@ -31,7 +31,7 @@ try {
   }
 } catch (error) {
   console.error('\n💥 STARTUP FAILED - Environment Configuration Error:')
-  console.error(error.message)
+  console.error(error instanceof Error ? error.message : String(error))
   console.error('\n🔧 Please check your environment file and try again.')
   console.error('🔍 JWT_SECRET loaded:', !!process.env.JWT_SECRET ? '✅ Yes' : '❌ No')
   process.exit(1)
