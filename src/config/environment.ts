@@ -40,7 +40,8 @@ export const validateEnvironment = (): void => {
   const required = [
     'SUPABASE_URL',
     'SUPABASE_ANON_KEY',
-    'JWT_SECRET'
+    'JWT_SECRET',
+    'FRONTEND_URL'
   ]
 
   const missing = required.filter(key => !process.env[key])
