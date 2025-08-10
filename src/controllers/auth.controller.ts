@@ -31,9 +31,13 @@ export class AuthController {
 
       return res.status(200).json({
         success: true,
-        token: result.data?.token,
-        user: result.data?.user,
-        message: result.message
+        data: {
+          token: result.data?.token,
+          user: result.data?.user
+        },
+        message: result.message,
+        timestamp: new Date().toISOString(),
+        requestId: req.headers['x-request-id'] || 'none'
       })
     } catch (error) {
       // Enhanced error logging with context for debugging
@@ -76,9 +80,13 @@ export class AuthController {
 
       return res.status(201).json({
         success: true,
-        token: result.data?.token,
-        user: result.data?.user,
-        message: 'Registration successful'
+        data: {
+          token: result.data?.token,
+          user: result.data?.user
+        },
+        message: 'Registration successful',
+        timestamp: new Date().toISOString(),
+        requestId: req.headers['x-request-id'] || 'none'
       })
     } catch (error) {
       console.error('Register controller error:', error)

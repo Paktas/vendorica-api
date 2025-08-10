@@ -50,6 +50,142 @@ All successful responses follow this format:
 
 ## API Endpoints
 
+### Authentication
+
+#### POST /internal/auth/login
+Authenticate user and receive JWT token.
+
+**Request Body:**
+```json
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "user-uuid",
+      "email": "user@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "role_id": "role-uuid",
+      "organization_id": "org-uuid",
+      "status": "active",
+      "organization": {
+        "id": "org-uuid",
+        "name": "Organization Name"
+      },
+      "role": {
+        "name": "user",
+        "display_name": "User"
+      }
+    }
+  },
+  "message": "Login successful",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "requestId": "req_123abc"
+}
+```
+
+**Error Response (400/401):**
+```json
+{
+  "success": false,
+  "error": "Invalid login credentials!",
+  "code": "UNAUTHORIZED",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "requestId": "req_123abc"
+}
+```
+
+#### POST /internal/auth/register
+Register new user account.
+
+**Request Body:**
+```json
+{
+  "email": "newuser@example.com",
+  "password": "password123"
+}
+```
+
+**Success Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "user-uuid",
+      "email": "newuser@example.com",
+      "first_name": "newuser",
+      "last_name": "",
+      "role_id": "role-uuid",
+      "organization_id": "org-uuid",
+      "status": "active",
+      "organization": {
+        "id": "org-uuid",
+        "name": "newuser Organization"
+      },
+      "role": {
+        "name": "user",
+        "display_name": "User"
+      }
+    }
+  },
+  "message": "Registration successful",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "requestId": "req_123abc"
+}
+```
+
+**Error Response (400):**
+```json
+{
+  "success": false,
+  "error": "Please enter a valid email address",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "requestId": "req_123abc"
+}
+```
+
+#### GET /internal/auth/me
+Get current authenticated user profile.
+
+**Headers:**
+```http
+Authorization: Bearer <jwt_token>
+```
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "user-uuid",
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "role_id": "role-uuid",
+    "organization_id": "org-uuid",
+    "status": "active",
+    "organization": {
+      "id": "org-uuid",
+      "name": "Organization Name"
+    }
+  },
+  "message": "User retrieved successfully",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "requestId": "req_123abc"
+}
+```
+
 ### Health Check
 
 #### GET /health

@@ -70,18 +70,22 @@ export const swaggerDefinition = {
         properties: {
           success: { type: 'boolean', example: true },
           data: { type: 'object', description: 'Response data' },
-          message: { type: 'string', example: 'Operation successful' }
+          message: { type: 'string', example: 'Operation successful' },
+          timestamp: { type: 'string', format: 'date-time', example: '2024-01-01T00:00:00.000Z' },
+          requestId: { type: 'string', example: 'req_123abc' }
         },
-        required: ['success']
+        required: ['success', 'timestamp']
       },
       ApiErrorResponse: {
         type: 'object',
         properties: {
           success: { type: 'boolean', example: false },
           error: { type: 'string', example: 'Operation failed' },
-          code: { type: 'string', example: 'VALIDATION_ERROR' }
+          code: { type: 'string', example: 'VALIDATION_ERROR' },
+          timestamp: { type: 'string', format: 'date-time', example: '2024-01-01T00:00:00.000Z' },
+          requestId: { type: 'string', example: 'req_123abc' }
         },
-        required: ['success', 'error']
+        required: ['success', 'error', 'timestamp']
       },
       
       // Authentication schemas
@@ -99,8 +103,14 @@ export const swaggerDefinition = {
           {
             type: 'object',
             properties: {
-              token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1dWlkIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwib3JnYW5pemF0aW9uSWQiOiJ1dWlkIn0.signature' },
-              user: { $ref: '#/components/schemas/User' }
+              data: {
+                type: 'object',
+                properties: {
+                  token: { type: 'string', example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1dWlkIiwiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwib3JnYW5pemF0aW9uSWQiOiJ1dWlkIn0.signature' },
+                  user: { $ref: '#/components/schemas/User' }
+                },
+                required: ['token', 'user']
+              }
             }
           }
         ]
@@ -510,8 +520,18 @@ export const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'array',
-                  items: { $ref: '#/components/schemas/Incident' }
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccessResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: {
+                          type: 'array',
+                          items: { $ref: '#/components/schemas/Incident' }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
@@ -536,7 +556,17 @@ export const swaggerDefinition = {
             description: 'Incident created successfully',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Incident' }
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccessResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: { $ref: '#/components/schemas/Incident' }
+                      }
+                    }
+                  ]
+                }
               }
             }
           }
@@ -562,7 +592,17 @@ export const swaggerDefinition = {
             description: 'Incident retrieved successfully',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Incident' }
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccessResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: { $ref: '#/components/schemas/Incident' }
+                      }
+                    }
+                  ]
+                }
               }
             }
           }
@@ -594,7 +634,17 @@ export const swaggerDefinition = {
             description: 'Incident updated successfully',
             content: {
               'application/json': {
-                schema: { $ref: '#/components/schemas/Incident' }
+                schema: {
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccessResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: { $ref: '#/components/schemas/Incident' }
+                      }
+                    }
+                  ]
+                }
               }
             }
           }
@@ -645,21 +695,30 @@ export const swaggerDefinition = {
             content: {
               'application/json': {
                 schema: {
-                  type: 'object',
-                  properties: {
-                    incident_id: { type: 'string' },
-                    external_ticket_id: { type: 'string' },
-                    similar_incidents: { type: 'number' },
-                    external_system_status: { type: 'string' },
-                    vendor_notifications_sent: { type: 'boolean' },
-                    estimated_recovery_time: { type: 'number' },
-                    affected_service_count: { type: 'number' },
-                    customer_impact_score: { type: 'number' },
-                    auto_generated_summary: { type: 'string' },
-                    recommended_actions: { type: 'array', items: { type: 'string' } },
-                    external_references: { type: 'array', items: { type: 'object' } },
-                    timestamp: { type: 'string', format: 'date-time' }
-                  }
+                  allOf: [
+                    { $ref: '#/components/schemas/ApiSuccessResponse' },
+                    {
+                      type: 'object',
+                      properties: {
+                        data: {
+                          type: 'object',
+                          properties: {
+                            incident_id: { type: 'string' },
+                            external_ticket_id: { type: 'string' },
+                            similar_incidents: { type: 'number' },
+                            external_system_status: { type: 'string' },
+                            vendor_notifications_sent: { type: 'boolean' },
+                            estimated_recovery_time: { type: 'number' },
+                            affected_service_count: { type: 'number' },
+                            customer_impact_score: { type: 'number' },
+                            auto_generated_summary: { type: 'string' },
+                            recommended_actions: { type: 'array', items: { type: 'string' } },
+                            external_references: { type: 'array', items: { type: 'object' } }
+                          }
+                        }
+                      }
+                    }
+                  ]
                 }
               }
             }
