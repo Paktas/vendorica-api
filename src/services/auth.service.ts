@@ -128,6 +128,15 @@ export class AuthService {
       }
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return {
+        success: false,
+        error: 'Please enter a valid email address'
+      }
+    }
+
     if (password.length < 8) {
       return {
         success: false,
@@ -153,36 +162,29 @@ export class AuthService {
       }
 
       // Generate default values
-      const defaultFirstName = email.split('@')[0] || 'User'
+      const emailPrefix = email.split('@')[0] || 'User'
+      const defaultFirstName = emailPrefix
       const defaultLastName = ''
+      const organizationName = `${emailPrefix} Organization`
 
-      // Get or create default organization
-      let { data: defaultOrg } = await supabase
+      // Create organization based on user's email prefix
+      const { data: newOrg, error: orgError } = await supabase
         .from('organizations')
+        .insert({
+          name: organizationName,
+          created_at: new Date().toISOString()
+        })
         .select('id')
-        .eq('name', 'Default Organization')
         .single()
 
-      if (!defaultOrg) {
-        const { data: newOrg, error: orgError } = await supabase
-          .from('organizations')
-          .insert({
-            name: 'Default Organization',
-            description: 'Default organization for new users',
-            created_at: new Date().toISOString()
-          })
-          .select('id')
-          .single()
-
-        if (orgError || !newOrg) {
-          console.error('Failed to create default organization:', orgError)
-          return {
-            success: false,
-            error: 'Failed to set up user organization'
-          }
+      if (orgError || !newOrg) {
+        console.error('Failed to create user organization:', orgError)
+        return {
+          success: false,
+          error: 'Failed to create user organization'
         }
-        defaultOrg = newOrg
       }
+      const defaultOrg = newOrg
 
       // Get or create default role
       let { data: defaultRole } = await supabase
