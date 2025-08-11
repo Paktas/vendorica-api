@@ -31,9 +31,60 @@ try {
   }
 } catch (error) {
   console.error('\n💥 STARTUP FAILED - Environment Configuration Error:')
-  console.error(error instanceof Error ? error.message : String(error))
-  console.error('\n🔧 Please check your environment file and try again.')
+  
+  // More robust error logging - avoid relying on error.message
+  console.error('📋 Raw error object:', error)
+  console.error('📋 Error type:', typeof error)
+  console.error('📋 Error constructor:', error?.constructor?.name)
+  if (error && typeof error === 'object') {
+    console.error('📋 Error keys:', Object.keys(error))
+  }
+  
+  // Enhanced debugging information for PM2 logs
+  const fs = require('fs')
+  const path = require('path')
+  const nodeEnv = process.env.NODE_ENV || 'development'
+  const expectedEnvFile = nodeEnv === 'production' ? '.env.production' : '.env.development'
+  
+  console.error('\n🔍 Detailed Environment Diagnostics:')
+  console.error('📁 Current working directory:', process.cwd())
+  console.error('🌍 NODE_ENV:', nodeEnv)
+  console.error('📝 Expected .env file:', expectedEnvFile)
+  
+  // Check which .env files exist
+  const possibleEnvFiles = ['.env', '.env.development', '.env.production', '.env.local']
+  const existingEnvFiles = possibleEnvFiles.filter(file => {
+    try {
+      return fs.existsSync(path.join(process.cwd(), file))
+    } catch (e) {
+      return false
+    }
+  })
+  console.error('📂 Existing .env files:', existingEnvFiles.length > 0 ? existingEnvFiles.join(', ') : 'NONE FOUND')
+  
+  // Check critical environment variables
+  const criticalVars = ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'JWT_SECRET', 'FRONTEND_URL']
+  console.error('🔑 Environment Variables Status:')
+  criticalVars.forEach(varName => {
+    const value = process.env[varName]
+    console.error(`   ${varName}: ${value ? `✅ Set (${value.length} chars)` : '❌ Missing'}`)
+  })
+  
+  // Restore the JWT_SECRET check
   console.error('🔍 JWT_SECRET loaded:', !!process.env.JWT_SECRET ? '✅ Yes' : '❌ No')
+  
+  // Show sample of all loaded environment variables (sanitized)
+  const allEnvKeys = Object.keys(process.env)
+    .filter(k => !k.toLowerCase().includes('secret') && !k.toLowerCase().includes('key') && !k.toLowerCase().includes('password'))
+    .slice(0, 15)
+  console.error('📊 Sample loaded env vars:', allEnvKeys.join(', '))
+  
+  console.error('\n🔧 Troubleshooting Tips:')
+  console.error(`   1. Ensure ${expectedEnvFile} exists in: ${process.cwd()}`)
+  console.error('   2. Check variable names match exactly (case-sensitive)')
+  console.error('   3. For PM2: verify environment variables in ecosystem file')
+  console.error('   4. For Docker: ensure ENV variables are properly mounted')
+  
   process.exit(1)
 }
 
