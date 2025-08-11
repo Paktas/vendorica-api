@@ -2,23 +2,33 @@ import dotenv from 'dotenv'
 
 // Clean environment loading based on NODE_ENV
 const environment = process.env.NODE_ENV || 'development'
-console.log(`🔧 Loading ${environment} environment`)
 
-// Load appropriate environment file
-if (environment === 'production') {
-  const result = dotenv.config({ path: '.env.production' })
-  if (result.error) {
-    console.error('❌ Error loading .env.production:', result.error.message)
+// Only load env if not already loaded (prevents duplicates on restarts)
+if (!process.env.DOTENV_LOADED) {
+  console.log(`🔧 Loading ${environment} environment`)
+  
+  // Load appropriate environment file
+  if (environment === 'production') {
+    const result = dotenv.config({ path: '.env.production' })
+    if (result.error) {
+      console.error('❌ Error loading .env.production:', result.error.message)
+    } else {
+      console.log('✅ Production environment loaded')
+    }
   } else {
-    console.log('✅ Production environment loaded')
+    const result = dotenv.config({ path: '.env.development' })
+    if (result.error) {
+      console.error('❌ Error loading .env.development:', result.error.message)
+    } else {
+      console.log('✅ Development environment loaded')
+    }
   }
+  
+  // Mark as loaded to prevent duplicates
+  process.env.DOTENV_LOADED = 'true'
 } else {
-  const result = dotenv.config({ path: '.env.development' })
-  if (result.error) {
-    console.error('❌ Error loading .env.development:', result.error.message)
-  } else {
-    console.log('✅ Development environment loaded')
-  }
+  // Silent on subsequent loads
+  console.log(`♻️  Environment already loaded (${environment})`)
 }
 
 // Early validation to catch configuration issues before app starts
