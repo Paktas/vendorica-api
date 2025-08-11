@@ -41,8 +41,8 @@ try {
   }
   
   // Enhanced debugging information for PM2 logs
-  const fs = require('fs')
-  const path = require('path')
+  const { readFileSync, existsSync } = await import('fs')
+  const { join } = await import('path')
   const nodeEnv = process.env.NODE_ENV || 'development'
   const expectedEnvFile = nodeEnv === 'production' ? '.env.production' : '.env.development'
   
@@ -55,7 +55,7 @@ try {
   const possibleEnvFiles = ['.env', '.env.development', '.env.production', '.env.local']
   const existingEnvFiles = possibleEnvFiles.filter(file => {
     try {
-      return fs.existsSync(path.join(process.cwd(), file))
+      return existsSync(join(process.cwd(), file))
     } catch (e) {
       return false
     }
